@@ -6,7 +6,7 @@ dotenv.config({
     path: path.resolve(process.cwd(), "../../.env"),
 })
 
-const EnvSchema = z.object({
+const envSchema = z.object({
     PORT: z.string().default("8000").transform(Number),
     SERVER_JWT_SECRET: z.string().min(1),
     DATABASE_URL: z.url(),
@@ -29,4 +29,4 @@ const EnvSchema = z.object({
     NEXT_PUBLIC_API_URL: z.string().optional(),
   });
   
-export const env = EnvSchema.parse(process.env);
+export const env = envSchema.parse(process.env);
