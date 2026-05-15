@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { AuthRequest } from '../../middleware/auth.middleware';
 import jwt from 'jsonwebtoken';
 import { db } from "@repo/database";
 import { githubUser } from '../../types/user.type';
@@ -56,7 +57,7 @@ export const login = async (req: Request, res: Response) => {
         const jwtPayload = {
             name: myUser.name,
             email: myUser.email,
-            id: myUser.id,
+            userId: myUser.id,
             githubLogin: myUser.githubLogin,
         };
 
@@ -171,7 +172,7 @@ export const githubCallback = async (req: Request, res: Response) => {
         const token = jwt.sign({
             name: myUser.name,
             email: myUser.email,
-            id: myUser.id,
+            userId: myUser.id,
             githubLogin: myUser.githubLogin,
         }, SERVER_JWT_SECRET, { expiresIn: '7d' });
 
@@ -191,9 +192,9 @@ export const githubCallback = async (req: Request, res: Response) => {
     }
 }
 
-export const me = async (req: Request, res: Response) => {
+export const me = async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as Request & { userId?: string }).userId;
+        const userId = req.userId;
         if (!userId) {
             return res.status(401).json({
                 success: false,
