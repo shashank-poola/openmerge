@@ -65,6 +65,8 @@ model User {
   email         String?        @unique
   name          String?
   avatarUrl     String?
+  accessToken   String?
+  avatarUrl     String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
