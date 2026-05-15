@@ -9,18 +9,24 @@ dotenv.config({
 const EnvSchema = z.object({
     PORT: z.string().default("8000").transform(Number),
     SERVER_JWT_SECRET: z.string().min(1),
-    DATABASE_URL: z.string().min(1),
+    DATABASE_URL: z.url(),
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SERVER: z.string().min(1),
-    GITHUB_CALLBACK_URL: z.string().min(1),
-    REDIS_URL: z.string().optional(),
+    GITHUB_CALLBACK_URL: z.url(),
+    GITHUB_APP_ID: z.string().min(1),
+    GITHUB_APP_NAME: z.string().min(1),
+    GITHUB_APP_CLIENT_ID: z.string().min(1),
+    GITHUB_APP_CLIENT_SECRET: z.string().min(1),
+    GITHUB_WEBHOOK_SECRET: z.string().min(1),
+    GITHUB_PRIVATE_KEY: z.string().min(1),
+    REDIS_URL: z.url().optional(),
     EMBED_MODEL: z.string().optional(),
-    QDRANT_APP_URL: z.string().optional(),
+    QDRANT_URL: z.url().optional(),
     QDRANT_CLUSTER_ID: z.string().optional(),
     GOOGLE_GEMINI_API: z.string().optional(),
-    SERPER_API: z.string().optional(),
+    EXA_API: z.string().optional(),
     NEXT_PUBLIC_APP_URL: z.string().optional(),
     NEXT_PUBLIC_API_URL: z.string().optional(),
   });
   
-  export const env = EnvSchema.parse(process.env);
+export const env = EnvSchema.parse(process.env);
