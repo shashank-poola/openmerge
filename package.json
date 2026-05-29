@@ -25,6 +25,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "@langchain/openai": "^1.4.7",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@qdrant/js-client-rest": "^1.17.0",

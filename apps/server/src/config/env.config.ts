@@ -24,6 +24,7 @@ const envSchema = z.object({
     QDRANT_URL: z.url().optional(),
     QDRANT_CLUSTER_ID: z.string().optional(),
     GROQ_API_KEY: z.string().min(1),
+    OPENROUTER_API_KEY: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(1).optional()),
     GOOGLE_GEMINI_API: z.string().optional(),
     EXA_API: z.string().optional(),
     NEXT_PUBLIC_APP_URL: z.string().optional(),

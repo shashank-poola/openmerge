@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { authMiddleware } from "../middleware/auth.middleware";
 import { getInstallations } from "../controllers/setup-controller/installations.controller";
 import { getInstallationRepos } from "../controllers/setup-controller/installation-repo.controller";
 import { handleInstallationCallback, syncInstallationRepos } from "../controllers/github-installation/installation.controller";
@@ -11,9 +10,9 @@ import {
 
 const installationRouter = Router();
 
-installationRouter.get("/", installationReadLimiter, authMiddleware, getInstallations);
-installationRouter.get("/:installationId/repos", installationReadLimiter, authMiddleware, getInstallationRepos);
-installationRouter.post("/callback", installationCallbackLimiter, authMiddleware, handleInstallationCallback);
-installationRouter.post("/:installationId/sync", syncLimiter, authMiddleware, syncInstallationRepos);
+installationRouter.get("/", installationReadLimiter, getInstallations);
+installationRouter.get("/:installationId/repos", installationReadLimiter, getInstallationRepos);
+installationRouter.post("/callback", installationCallbackLimiter, handleInstallationCallback);
+installationRouter.post("/:installationId/sync", syncLimiter, syncInstallationRepos);
 
 export default installationRouter;

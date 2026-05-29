@@ -1,5 +1,5 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { groq } from "../../config/llm.config";
+import { invokeLLM } from "../../llm/llm.provider";
 import type { PRReviewStateType, AgentComment } from "../review.state";
 import { CODE_REVIEW_SYSTEM, CODE_REVIEW_HUMAN } from "../../prompts/code-review.prompt";
 import { SECURITY_SYSTEM, SECURITY_HUMAN } from "../../prompts/security.prompt";
@@ -31,29 +31,29 @@ const buildParams = (state: PRReviewStateType) => ({
 export const codeReviewAgent = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
     if (!state.diff || state.error) return {};
     const params = buildParams(state);
-    const response = await groq.invoke([
+    const { content } = await invokeLLM([
         new SystemMessage(CODE_REVIEW_SYSTEM),
         new HumanMessage(CODE_REVIEW_HUMAN(params)),
-    ]);
-    return { codeComments: parseComments(response.content as string) };
+    ], "codeReview");
+    return { codeComments: parseComments(content) };
 };
 
 export const securityAgent = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
     if (!state.diff || state.error) return {};
     const params = buildParams(state);
-    const response = await groq.invoke([
+    const { content } = await invokeLLM([
         new SystemMessage(SECURITY_SYSTEM),
         new HumanMessage(SECURITY_HUMAN(params)),
-    ]);
-    return { securityComments: parseComments(response.content as string) };
+    ], "security");
+    return { securityComments: parseComments(content) };
 };
 
 export const performanceAgent = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
     if (!state.diff || state.error) return {};
     const params = buildParams(state);
-    const response = await groq.invoke([
+    const { content } = await invokeLLM([
         new SystemMessage(PERFORMANCE_SYSTEM),
         new HumanMessage(PERFORMANCE_HUMAN(params)),
-    ]);
-    return { performanceComments: parseComments(response.content as string) };
+    ], "performance");
+    return { performanceComments: parseComments(content) };
 };
