@@ -6,15 +6,18 @@ import mainrouter from "./routes";
 const app = express();
 const PORT = process.env.PORT;
 
-app.use(express.json());
-app.use(cors())
+const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
-const ALLOWED_ORIGINS = [
-    "http://localhost:3000"
-]
+app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 
-app.use("/api/v1", mainrouter)
+app.use(express.json({
+    verify: (req: any, _res, buf) => {
+        req.rawBody = buf;
+    },
+}));
+
+app.use("/api/v1", mainrouter);
 
 app.listen(PORT, () => {
-    console.log("Server is running on PORT:", PORT)
+    console.log("Server is running on PORT:", PORT);
 });
