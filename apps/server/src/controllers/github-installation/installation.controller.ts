@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 import type { AuthRequest } from '../../middleware/auth.middleware';
 import { db } from '@repo/database';
-import { env } from '../../config/env';
+import { env } from '../../config/env.config';
 import { installationSchema } from '../../schema/installation.schema';
 import { repoSchema } from '../../schema/repo.schema';
 import { githubInstallation } from '../../types/installation.type';

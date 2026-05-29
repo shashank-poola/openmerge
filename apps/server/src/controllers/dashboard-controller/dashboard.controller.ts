@@ -4,7 +4,7 @@ import type { AuthRequest } from '../../middleware/auth.middleware';
 import { githubInstallation } from '../../types/installation.type';
 import { githubRepo } from '../../types/repo.type';
 import { reviewSession } from '../../types/review.type';
-import { reviewComment } from '../../types/reviewComment.type';
+import { reviewComment } from '../../types/review-comment.type';
 
 export const getDashboard = async (req: AuthRequest, res: Response) => {
     try {

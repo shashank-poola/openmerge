@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 import { Webhooks } from '@octokit/webhooks';
 import { db } from '@repo/database';
-import { env } from '../../config/env';
+import { env } from '../../config/env.config';
+import { reviewGraph } from '../../graph/review.graph';
 
 const webhooks = new Webhooks({ secret: env.GITHUB_WEBHOOK_SECRET });
 
@@ -77,7 +78,7 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
 
     const repo = await db.repository.findUnique({
         where: { githubRepoId },
-        include: { installation: { select: { status: true } } },
+        include: { installation: { select: { status: true, githubInstallationId: true } } },
     });
 
     if (!repo || !repo.isActive || !repo.autoReviewEnabled) return;
@@ -91,14 +92,28 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
         where: { repositoryId: repo.id, prNumber, status: { in: ['QUEUED', 'RUNNING'] } },
     });
 
+    let session;
     if (existing) {
-        await db.reviewSession.update({
+        session = await db.reviewSession.update({
             where: { id: existing.id },
             data: { headSha, status: 'QUEUED' },
         });
     } else {
-        await db.reviewSession.create({
+        session = await db.reviewSession.create({
             data: { repositoryId: repo.id, prNumber, headSha, baseBranch, status: 'QUEUED' },
         });
     }
+
+    reviewGraph.invoke({
+        reviewSessionId: session.id,
+        repositoryId: repo.id,
+        githubInstallationId: repo.installation.githubInstallationId.toString(),
+        prNumber,
+        headSha,
+        baseBranch,
+        owner: repo.owner,
+        repoName: repo.name,
+    }).catch((err) => {
+        console.error(`Graph failed for session ${session.id}:`, err);
+    });
 }

@@ -23,6 +23,7 @@ const envSchema = z.object({
     EMBED_MODEL: z.string().optional(),
     QDRANT_URL: z.url().optional(),
     QDRANT_CLUSTER_ID: z.string().optional(),
+    GROQ_API_KEY: z.string().min(1),
     GOOGLE_GEMINI_API: z.string().optional(),
     EXA_API: z.string().optional(),
     NEXT_PUBLIC_APP_URL: z.string().optional(),

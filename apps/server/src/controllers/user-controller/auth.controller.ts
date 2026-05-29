@@ -3,7 +3,7 @@ import type { AuthRequest } from '../../middleware/auth.middleware';
 import jwt from 'jsonwebtoken';
 import { db } from "@repo/database";
 import { githubUser } from '../../types/user.type';
-import { env } from '../../config/env';
+import { env } from '../../config/env.config';
 import { upsertUserFromGithubData } from '../../utils/user.utils';
 import { userSchema } from '../../schema/user.schema';
 

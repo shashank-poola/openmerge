@@ -1,12 +1,15 @@
 import express from "express";
 import cors from "cors";
-import "dotenv/config"
+import "dotenv/config";
+import { env } from "./config/env.config";
 import mainrouter from "./routes";
 
 const app = express();
-const PORT = process.env.PORT;
 
-const ALLOWED_ORIGINS = ["http://localhost:3000"];
+const ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    ...(env.NEXT_PUBLIC_APP_URL ? [env.NEXT_PUBLIC_APP_URL] : []),
+];
 
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 
@@ -18,6 +21,6 @@ app.use(express.json({
 
 app.use("/api/v1", mainrouter);
 
-app.listen(PORT, () => {
-    console.log("Server is running on PORT:", PORT);
+app.listen(env.PORT, () => {
+    console.log("Server running on port", env.PORT);
 });
