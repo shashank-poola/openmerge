@@ -218,6 +218,7 @@ export const me = async (req: AuthRequest, res: Response) => {
         return res.status(200).json({
             success: true,
             user: githubUser(user),
+            error: null,
         });
 
     } catch (err) {

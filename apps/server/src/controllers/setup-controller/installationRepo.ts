@@ -1,20 +1,24 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import type { AuthRequest } from "../../middleware/auth.middleware";
 import { db } from "@repo/database";
-import { githubInstallation } from "../../types/installation.type";
 import { githubRepo } from "../../types/repo.type";
 
 export const getInstallationRepos = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.userId;
-        const { installationId } = req.params;
+        const installationId = typeof req.params.installationId === 'string' ? req.params.installationId : null;
 
         if (!userId) {
-            res.status(401).json({ 
-                success: false, 
-                message: null, 
-                error: 'UNAUTHORIZED' 
+            res.status(401).json({
+                success: false,
+                message: null,
+                error: 'UNAUTHORIZED'
             })
+            return;
+        }
+
+        if (!installationId) {
+            res.status(400).json({ success: false, message: null, error: 'INVALID_PARAMS' });
             return;
         }
 
