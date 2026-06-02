@@ -1,3 +1,5 @@
+import type { PRReviewStateType } from "../graph/review.state";
+
 export const PERFORMANCE_SYSTEM = `You are a performance engineer reviewing code for bottlenecks and inefficiencies.
 Focus on: N+1 database queries, missing database indexes, synchronous blocking operations that should be async,
 unnecessary re-computation in loops, large payload serialization, memory leaks, unbounded data fetching,
@@ -18,10 +20,34 @@ export const PERFORMANCE_HUMAN = (params: {
     prTitle: string;
     changedFiles: string[];
     diff: string;
-}) => `PR: ${params.prTitle}
-Changed files: ${params.changedFiles.join(", ")}
+    context: Pick<PRReviewStateType, "codeGraph" | "astSummaries" | "linterResults">;
+}) => {
+    const parts: string[] = [];
 
-Diff:
-${params.diff}
+    parts.push(`PR: ${params.prTitle}`);
+    parts.push(`Changed files: ${params.changedFiles.join(", ")}`);
 
-Identify performance bottlenecks and inefficiencies in these changes.`;
+    if (params.context.astSummaries.length > 0) {
+        const astSummary = params.context.astSummaries
+            .map((s) => {
+                const fns = s.functions.map((f) => `${f.isAsync ? "async " : ""}${f.name}()`).join(", ");
+                return `  ${s.filePath}: functions=[${fns}]`;
+            })
+            .join("\n");
+        parts.push(`\n=== CHANGED SYMBOLS ===\n${astSummary}`);
+    }
+
+    if (params.context.codeGraph.length > 0) {
+        const hotPaths = params.context.codeGraph
+            .filter((n) => n.calledBy.length > 2)
+            .map((n) => `  ${n.functionName} (${n.filePath}) — called by ${n.calledBy.length} callers`);
+        if (hotPaths.length > 0) {
+            parts.push(`\n=== HOT PATHS (high-frequency call targets) ===\n${hotPaths.join("\n")}`);
+        }
+    }
+
+    parts.push(`\n=== DIFF ===\n${params.diff}`);
+    parts.push(`\nIdentify performance bottlenecks and inefficiencies in these changes.`);
+
+    return parts.join("\n");
+};

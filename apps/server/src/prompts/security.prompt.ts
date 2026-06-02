@@ -1,3 +1,5 @@
+import type { PRReviewStateType } from "../graph/review.state";
+
 export const SECURITY_SYSTEM = `You are a senior application security engineer doing a security-focused code review.
 Focus on OWASP Top 10 and beyond: SQL injection, XSS, CSRF, SSRF, path traversal, command injection,
 insecure deserialization, broken auth, hardcoded secrets/tokens, missing authorization checks,
@@ -18,10 +20,44 @@ export const SECURITY_HUMAN = (params: {
     prTitle: string;
     changedFiles: string[];
     diff: string;
-}) => `PR: ${params.prTitle}
-Changed files: ${params.changedFiles.join(", ")}
+    context: Pick<PRReviewStateType, "linterResults" | "importSources" | "codeGraph">;
+}) => {
+    const parts: string[] = [];
 
-Diff:
-${params.diff}
+    parts.push(`PR: ${params.prTitle}`);
+    parts.push(`Changed files: ${params.changedFiles.join(", ")}`);
 
-Identify security vulnerabilities introduced or exposed by these changes.`;
+    const securityFindings = params.context.linterResults.filter((i) =>
+        i.rule.includes("security") || i.rule.includes("inject") ||
+        i.rule.includes("xss") || i.rule.includes("no-eval") ||
+        i.severity === "error"
+    );
+    if (securityFindings.length > 0) {
+        const summary = securityFindings
+            .map((i) => `  ${i.filePath}:${i.line} [${i.severity}] ${i.rule}: ${i.message}`)
+            .slice(0, 20)
+            .join("\n");
+        parts.push(`\n=== SAST FINDINGS ===\n${summary}`);
+    }
+
+    if (params.context.importSources.length > 0) {
+        const importSummary = params.context.importSources
+            .slice(0, 4)
+            .map((s) => `--- ${s.resolvedPath} (used in ${s.usedInFile}) ---\n${s.sourceCode.slice(0, 600)}`)
+            .join("\n\n");
+        parts.push(`\n=== DEPENDENCY SOURCE ===\n${importSummary}`);
+    }
+
+    const withCallers = params.context.codeGraph.filter((n) => n.calledBy.length > 0);
+    if (withCallers.length > 0) {
+        const callerSummary = withCallers
+            .map((n) => `  ${n.functionName}: called by ${n.calledBy.map((c) => `${c.functionName} (${c.filePath})`).join(", ")}`)
+            .join("\n");
+        parts.push(`\n=== CALL SITES (trust boundary context) ===\n${callerSummary}`);
+    }
+
+    parts.push(`\n=== DIFF ===\n${params.diff}`);
+    parts.push(`\nIdentify security vulnerabilities introduced or exposed by these changes.`);
+
+    return parts.join("\n");
+};

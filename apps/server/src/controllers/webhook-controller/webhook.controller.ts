@@ -1,8 +1,10 @@
 import type { Request, Response } from 'express';
 import { Webhooks } from '@octokit/webhooks';
+import { Octokit } from '@octokit/rest';
+import { createAppAuth } from '@octokit/auth-app';
 import { db } from '@repo/database';
 import { env } from '../../config/env.config';
-import { reviewGraph } from '../../graph/review.graph';
+import { reviewQueue } from '../../queue/review.queue';
 
 const webhooks = new Webhooks({ secret: env.GITHUB_WEBHOOK_SECRET });
 
@@ -22,10 +24,20 @@ type InstallationPayload = {
     installation: { id: number };
 };
 
+const createInstallationOctokit = (installationId: number) =>
+    new Octokit({
+        authStrategy: createAppAuth,
+        auth: {
+            appId: env.GITHUB_APP_ID,
+            privateKey: env.GITHUB_PRIVATE_KEY.replace(/\\n/g, '\n'),
+            installationId,
+        },
+    });
+
 export const handleWebhook = async (req: Request, res: Response) => {
     const signature = req.headers['x-hub-signature-256'];
     const event = req.headers['x-github-event'];
-    const rawBody = (req as any).rawBody as Buffer | undefined;
+    const rawBody = (req as unknown as { rawBody?: Buffer }).rawBody;
 
     if (!rawBody || typeof signature !== 'string' || typeof event !== 'string') {
         return res.status(400).json({ success: false, error: 'INVALID_WEBHOOK' });
@@ -44,7 +56,6 @@ export const handleWebhook = async (req: Request, res: Response) => {
         } else if (event === 'pull_request') {
             await handlePullRequestEvent(payload as PullRequestPayload);
         }
-
         return res.status(200).json({ success: true });
     } catch (err) {
         console.error('Webhook processing failed:', err);
@@ -54,20 +65,14 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
 async function handleInstallationEvent(payload: InstallationPayload) {
     const githubInstallationId = BigInt(payload.installation.id);
-
     const statusMap: Record<string, 'ACTIVE' | 'SUSPENDED' | 'REMOVED'> = {
         deleted: 'REMOVED',
         suspend: 'SUSPENDED',
         unsuspend: 'ACTIVE',
     };
-
     const status = statusMap[payload.action];
     if (!status) return;
-
-    await db.installation.updateMany({
-        where: { githubInstallationId },
-        data: { status },
-    });
+    await db.installation.updateMany({ where: { githubInstallationId }, data: { status } });
 }
 
 async function handlePullRequestEvent(payload: PullRequestPayload) {
@@ -84,6 +89,7 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
     if (!repo || !repo.isActive || !repo.autoReviewEnabled) return;
     if (repo.installation.status !== 'ACTIVE') return;
 
+    const installationId = Number(repo.installation.githubInstallationId);
     const prNumber = payload.number;
     const headSha = payload.pull_request.head.sha;
     const baseBranch = payload.pull_request.base.ref;
@@ -104,7 +110,26 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
         });
     }
 
-    reviewGraph.invoke({
+    // Post loading comment so the PR author knows review is in progress
+    let loadingCommentId: bigint | null = null;
+    try {
+        const octokit = createInstallationOctokit(installationId);
+        const { data: comment } = await octokit.rest.issues.createComment({
+            owner: repo.owner,
+            repo: repo.name,
+            issue_number: prNumber,
+            body: '🐰 **PullRabbit** is analyzing your PR — results will appear shortly...',
+        });
+        loadingCommentId = BigInt(comment.id);
+        await db.reviewSession.update({
+            where: { id: session.id },
+            data: { githubLoadingCommentId: loadingCommentId },
+        });
+    } catch {
+        // loading comment is best-effort
+    }
+
+    await reviewQueue.add('review', {
         reviewSessionId: session.id,
         repositoryId: repo.id,
         githubInstallationId: repo.installation.githubInstallationId.toString(),
@@ -113,7 +138,5 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
         baseBranch,
         owner: repo.owner,
         repoName: repo.name,
-    }).catch((err) => {
-        console.error(`Graph failed for session ${session.id}:`, err);
     });
 }

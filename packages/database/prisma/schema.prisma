@@ -131,20 +131,21 @@ model Subscription {
 }
 
 model ReviewSession {
-  id             String        @id @default(uuid())
-  repositoryId   String
-  prNumber       Int
-  headSha        String?
-  baseBranch     String        @default("main")
-  status         ReviewStatus  @default(QUEUED)
-  summary        String?
-  filesReviewed  Int           @default(0)
-  totalComments  Int           @default(0)
-  githubReviewId BigInt?
-  errorMessage   String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  completedAt    DateTime?
+  id                     String        @id @default(uuid())
+  repositoryId           String
+  prNumber               Int
+  headSha                String?
+  baseBranch             String        @default("main")
+  status                 ReviewStatus  @default(QUEUED)
+  summary                String?
+  filesReviewed          Int           @default(0)
+  totalComments          Int           @default(0)
+  githubReviewId         BigInt?
+  githubLoadingCommentId BigInt?
+  errorMessage           String?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  completedAt            DateTime?
 
   repository     Repository    @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
   comments       ReviewComment[]

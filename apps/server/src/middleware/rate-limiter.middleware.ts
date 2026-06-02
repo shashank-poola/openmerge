@@ -1,4 +1,4 @@
-import rateLimit, { ipKeyGenerator } from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 import type { Request } from "express";
 import jwt from "jsonwebtoken";
 
@@ -12,7 +12,7 @@ const userOrIpKey = (req: Request): string => {
             if (decoded?.userId) return `user:${decoded.userId}`;
         } catch {}
     }
-    return ipKeyGenerator(req);
+    return req.ip ?? req.socket.remoteAddress ?? "unknown";
 };
 
 export const signinLimiter = rateLimit({

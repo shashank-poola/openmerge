@@ -5,12 +5,10 @@ import { CODE_REVIEW_SYSTEM, CODE_REVIEW_HUMAN } from "../../prompts/code-review
 import { SECURITY_SYSTEM, SECURITY_HUMAN } from "../../prompts/security.prompt";
 import { PERFORMANCE_SYSTEM, PERFORMANCE_HUMAN } from "../../prompts/performance.prompt";
 
-const MAX_DIFF_CHARS = 28000;
+const MAX_DIFF_CHARS = 28_000;
 
-const truncateDiff = (diff: string): string => {
-    if (diff.length <= MAX_DIFF_CHARS) return diff;
-    return diff.slice(0, MAX_DIFF_CHARS) + "\n\n[diff truncated due to size]";
-};
+const truncateDiff = (diff: string): string =>
+    diff.length <= MAX_DIFF_CHARS ? diff : diff.slice(0, MAX_DIFF_CHARS) + "\n\n[diff truncated]";
 
 const parseComments = (raw: string): AgentComment[] => {
     try {
@@ -22,38 +20,64 @@ const parseComments = (raw: string): AgentComment[] => {
     }
 };
 
-const buildParams = (state: PRReviewStateType) => ({
-    prTitle: state.prTitle ?? `PR #${state.prNumber}`,
-    changedFiles: state.changedFiles,
-    diff: truncateDiff(state.diff ?? ""),
-});
-
 export const codeReviewAgent = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
     if (!state.diff || state.error) return {};
-    const params = buildParams(state);
+
     const { content } = await invokeLLM([
         new SystemMessage(CODE_REVIEW_SYSTEM),
-        new HumanMessage(CODE_REVIEW_HUMAN(params)),
+        new HumanMessage(CODE_REVIEW_HUMAN({
+            prTitle: state.prTitle ?? `PR #${state.prNumber}`,
+            changedFiles: state.changedFiles,
+            diff: truncateDiff(state.diff),
+            context: {
+                linterResults: state.linterResults,
+                codeGraph: state.codeGraph,
+                astSummaries: state.astSummaries,
+                importSources: state.importSources,
+                prHistory: state.prHistory,
+            },
+        })),
     ], "codeReview");
+
     return { codeComments: parseComments(content) };
 };
 
 export const securityAgent = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
     if (!state.diff || state.error) return {};
-    const params = buildParams(state);
+
     const { content } = await invokeLLM([
         new SystemMessage(SECURITY_SYSTEM),
-        new HumanMessage(SECURITY_HUMAN(params)),
+        new HumanMessage(SECURITY_HUMAN({
+            prTitle: state.prTitle ?? `PR #${state.prNumber}`,
+            changedFiles: state.changedFiles,
+            diff: truncateDiff(state.diff),
+            context: {
+                linterResults: state.linterResults,
+                importSources: state.importSources,
+                codeGraph: state.codeGraph,
+            },
+        })),
     ], "security");
+
     return { securityComments: parseComments(content) };
 };
 
 export const performanceAgent = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
     if (!state.diff || state.error) return {};
-    const params = buildParams(state);
+
     const { content } = await invokeLLM([
         new SystemMessage(PERFORMANCE_SYSTEM),
-        new HumanMessage(PERFORMANCE_HUMAN(params)),
+        new HumanMessage(PERFORMANCE_HUMAN({
+            prTitle: state.prTitle ?? `PR #${state.prNumber}`,
+            changedFiles: state.changedFiles,
+            diff: truncateDiff(state.diff),
+            context: {
+                codeGraph: state.codeGraph,
+                astSummaries: state.astSummaries,
+                linterResults: state.linterResults,
+            },
+        })),
     ], "performance");
+
     return { performanceComments: parseComments(content) };
 };

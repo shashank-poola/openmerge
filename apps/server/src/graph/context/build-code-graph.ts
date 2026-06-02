@@ -12,8 +12,6 @@ const BUILTIN_CALLS = new Set([
     "setTimeout", "setInterval", "clearTimeout", "clearInterval",
 ]);
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
 const findFunctionDefs = (code: string): Array<{ name: string; startLine: number }> => {
     const defs: Array<{ name: string; startLine: number }> = [];
     code.split("\n").forEach((line, i) => {
@@ -67,24 +65,19 @@ const walkDir = async (dir: string, acc: string[] = []): Promise<string[]> => {
             if (e.isDirectory()) await walkDir(full, acc);
             else if (SUPPORTED_EXTS.has(extname(e.name))) acc.push(full);
         }
-    } catch { /* unreadable */ }
+    } catch { /* unreadable dir */ }
     return acc;
 };
-
-// ─── main ─────────────────────────────────────────────────────────────────────
 
 export const buildCodeGraph = async (params: {
     changedFiles: string[];
     repoLocalPath: string;
 }): Promise<CodeGraphNode[]> => {
-    // fn name → first definition file (relative path)
     const defIndex = new Map<string, string>();
-    // inverted index: fn name → who calls it
     const callerIndex = new Map<string, Array<{ functionName: string; filePath: string; line: number }>>();
 
     const allFiles = await walkDir(params.repoLocalPath);
 
-    // Single pass over repo — build both indexes
     await Promise.all(
         allFiles.slice(0, 400).map(async (absPath) => {
             try {
@@ -104,11 +97,10 @@ export const buildCodeGraph = async (params: {
                         callerIndex.set(calledFn, existing);
                     }
                 }
-            } catch { /* skip */ }
+            } catch { /* skip unreadable */ }
         })
     );
 
-    // Build graph nodes only for changed files
     const graph: CodeGraphNode[] = [];
 
     for (const filePath of params.changedFiles) {
@@ -123,10 +115,7 @@ export const buildCodeGraph = async (params: {
                 const body = getFunctionBody(lines, def.startLine);
                 const calls = extractCalls(body)
                     .filter((n) => n !== def.name)
-                    .map((name) => ({
-                        name,
-                        resolvedFile: defIndex.get(name) as string | undefined,
-                    }))
+                    .map((name) => ({ name, resolvedFile: defIndex.get(name) as string | undefined }))
                     .slice(0, 20);
 
                 const calledBy = (callerIndex.get(def.name) ?? []).slice(0, 15);
