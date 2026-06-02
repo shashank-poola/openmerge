@@ -1,10 +1,8 @@
 import { readFile, access } from "fs/promises";
 import { join, extname } from "path";
-import type { ASTSummary } from "../review.state";
+import type { ASTSummary } from "../../types/review-context.type";
 
 const SUPPORTED_EXTS = new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts"]);
-
-// ─── extractors ──────────────────────────────────────────────────────────────
 
 const extractFunctions = (lines: string[]): ASTSummary["functions"] => {
     const functions: ASTSummary["functions"] = [];
@@ -129,8 +127,6 @@ const extractImports = (lines: string[]): ASTSummary["imports"] => {
 
     return imports;
 };
-
-// ─── main ────────────────────────────────────────────────────────────────────
 
 export const buildAST = async (params: {
     changedFiles: string[];

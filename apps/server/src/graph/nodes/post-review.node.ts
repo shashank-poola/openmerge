@@ -27,7 +27,7 @@ const resolveLoadingComment = async (
                 owner: state.owner,
                 repo: state.repoName,
                 comment_id: Number(loadingCommentId),
-                body: "🐰 **PullRabbit** reviewed this PR — no issues found. ✅",
+                body: "**PullRabbit** completed the review. No issues were found in this pull request.",
             });
         } else {
             await octokit.rest.issues.deleteComment({
@@ -37,17 +37,20 @@ const resolveLoadingComment = async (
             });
         }
     } catch {
-        // best-effort — ignore if comment was already deleted
+        // best-effort
     }
 };
 
 const formatCommentBody = (c: PRReviewStateType["allComments"][number]): string => {
-    const emoji: Record<string, string> = {
-        CRITICAL: "🔴", HIGH: "🟠", MEDIUM: "🟡", LOW: "🔵", INFO: "⚪",
-    };
-    const lines = [`${emoji[c.severity] ?? ""} **[${c.severity}] ${c.category}**`, "", c.body];
-    if (c.suggestion) lines.push("", `**Suggestion:** ${c.suggestion}`);
-    lines.push("", "_— PullRabbit AI Review_");
+    const lines = [
+        `**[${c.severity}] ${c.category}**`,
+        "",
+        c.body,
+    ];
+    if (c.suggestion) {
+        lines.push("", "**Suggestion**", "", c.suggestion);
+    }
+    lines.push("", "_PullRabbit_");
     return lines.join("\n");
 };
 

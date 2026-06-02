@@ -1,4 +1,4 @@
-import type { PRReviewStateType } from "../graph/review.state";
+import type { AgentInput } from "../agent/agent.types";
 
 export const SECURITY_SYSTEM = `You are a senior application security engineer doing a security-focused code review.
 Focus on OWASP Top 10 and beyond: SQL injection, XSS, CSRF, SSRF, path traversal, command injection,
@@ -20,7 +20,7 @@ export const SECURITY_HUMAN = (params: {
     prTitle: string;
     changedFiles: string[];
     diff: string;
-    context: Pick<PRReviewStateType, "linterResults" | "importSources" | "codeGraph">;
+    context: AgentInput["context"];
 }) => {
     const parts: string[] = [];
 

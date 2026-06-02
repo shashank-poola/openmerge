@@ -1,4 +1,4 @@
-import type { PRReviewStateType } from "../graph/review.state";
+import type { AgentInput } from "../agent/agent.types";
 
 export const PERFORMANCE_SYSTEM = `You are a performance engineer reviewing code for bottlenecks and inefficiencies.
 Focus on: N+1 database queries, missing database indexes, synchronous blocking operations that should be async,
@@ -20,7 +20,7 @@ export const PERFORMANCE_HUMAN = (params: {
     prTitle: string;
     changedFiles: string[];
     diff: string;
-    context: Pick<PRReviewStateType, "codeGraph" | "astSummaries" | "linterResults">;
+    context: AgentInput["context"];
 }) => {
     const parts: string[] = [];
 

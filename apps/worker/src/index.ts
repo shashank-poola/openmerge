@@ -4,15 +4,27 @@ import { db } from "@repo/database";
 import { reviewGraph } from "../../server/src/graph/review.graph";
 import type { ReviewJobData } from "../../server/src/queue/review.queue";
 
-const connection = {
-    url: process.env.REDIS_URL ?? "redis://localhost:6379",
+const parseRedisUrl = (url: string) => {
+    try {
+        const parsed = new URL(url);
+        return {
+            host: parsed.hostname || "127.0.0.1",
+            port: Number(parsed.port) || 6379,
+            ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
+            ...(parsed.username && parsed.username !== "default" ? { username: parsed.username } : {}),
+        };
+    } catch {
+        return { host: "127.0.0.1", port: 6379 };
+    }
 };
+
+const connection = parseRedisUrl(process.env.REDIS_URL ?? "redis://127.0.0.1:6379");
 
 const worker = new Worker<ReviewJobData>(
     "github_pr_review",
     async (job) => {
         const data = job.data;
-        console.log(`[worker] processing review session ${data.reviewSessionId} PR#${data.prNumber}`);
+        console.log(`[worker] processing session ${data.reviewSessionId} PR#${data.prNumber}`);
 
         try {
             await reviewGraph.invoke({
@@ -34,10 +46,7 @@ const worker = new Worker<ReviewJobData>(
             throw err;
         }
     },
-    {
-        connection,
-        concurrency: 3,
-    }
+    { connection, concurrency: 3 }
 );
 
 worker.on("completed", (job) => {
@@ -49,7 +58,7 @@ worker.on("failed", (job, err) => {
 });
 
 worker.on("error", (err) => {
-    console.error("[worker] worker error:", err);
+    console.error("[worker] error:", err);
 });
 
 console.log("[worker] started — listening on queue: github_pr_review");

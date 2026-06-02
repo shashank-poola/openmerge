@@ -1,6 +1,6 @@
 import { readFile, readdir } from "fs/promises";
 import { join, extname, relative } from "path";
-import type { CodeGraphNode } from "../review.state";
+import type { CodeGraphNode } from "../../types/review-context.type";
 
 const SUPPORTED_EXTS = new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts"]);
 const SKIP_DIRS = new Set(["node_modules", "dist", "build", ".git", ".next", "coverage"]);

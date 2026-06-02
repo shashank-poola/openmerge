@@ -12,6 +12,7 @@ const ALLOWED_ORIGINS = [
     ...(env.NEXT_PUBLIC_APP_URL ? [env.NEXT_PUBLIC_APP_URL] : []),
 ];
 
+app.set("trust proxy", 1);
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(requestLogger);
 

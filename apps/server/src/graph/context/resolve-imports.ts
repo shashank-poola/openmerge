@@ -1,6 +1,6 @@
 import { readFile, access } from "fs/promises";
 import { join, dirname, extname, resolve } from "path";
-import type { ImportSource } from "../review.state";
+import type { ImportSource } from "../../types/review-context.type";
 
 const SUPPORTED_EXTS = [".ts", ".tsx", ".js", ".jsx", ".mts", ".cts"];
 const MAX_SOURCE_CHARS = 4_000;

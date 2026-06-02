@@ -1,7 +1,7 @@
 import { Octokit } from "@octokit/rest";
 import { createAppAuth } from "@octokit/auth-app";
 import { env } from "../../config/env.config";
-import type { PRHistoryEntry } from "../review.state";
+import type { PRHistoryEntry } from "../../types/review-context.type";
 
 const createInstallationOctokit = (githubInstallationId: string) =>
     new Octokit({

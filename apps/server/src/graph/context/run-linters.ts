@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 import { join, extname, relative } from "path";
-import type { LinterIssue } from "../review.state";
+import type { LinterIssue } from "../../types/review-context.type";
 
 const execAsync = promisify(exec);
 

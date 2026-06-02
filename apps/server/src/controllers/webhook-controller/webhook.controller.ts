@@ -118,7 +118,7 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
             owner: repo.owner,
             repo: repo.name,
             issue_number: prNumber,
-            body: '🐰 **PullRabbit** is analyzing your PR — results will appear shortly...',
+            body: '**PullRabbit** is analyzing this pull request. An automated review will be posted as inline comments once the analysis is complete.',
         });
         loadingCommentId = BigInt(comment.id);
         await db.reviewSession.update({

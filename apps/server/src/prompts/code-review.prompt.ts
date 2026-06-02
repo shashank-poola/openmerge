@@ -1,4 +1,4 @@
-import type { PRReviewStateType } from "../graph/review.state";
+import type { AgentInput } from "../agent/agent.types";
 
 export const CODE_REVIEW_SYSTEM = `You are an expert software engineer doing a thorough code review.
 Focus on: bugs, incorrect logic, unhandled edge cases, missing error handling, type safety issues,
@@ -19,7 +19,7 @@ export const CODE_REVIEW_HUMAN = (params: {
     prTitle: string;
     changedFiles: string[];
     diff: string;
-    context: Pick<PRReviewStateType, "linterResults" | "codeGraph" | "astSummaries" | "importSources" | "prHistory">;
+    context: AgentInput["context"];
 }) => {
     const parts: string[] = [];
 

@@ -11,9 +11,24 @@ export type ReviewJobData = {
     repoName: string;
 };
 
-const connection = {
-    url: process.env.REDIS_URL ?? "redis://localhost:6379",
+const parseRedisUrl = (url: string) => {
+    try {
+        const parsed = new URL(url);
+        return {
+            host: parsed.hostname || "127.0.0.1",
+            port: Number(parsed.port) || 6379,
+            ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
+            ...(parsed.username && parsed.username !== "default" ? { username: parsed.username } : {}),
+            lazyConnect: true,
+            enableOfflineQueue: false,
+            maxRetriesPerRequest: null,
+        };
+    } catch {
+        return { host: "127.0.0.1", port: 6379, lazyConnect: true, enableOfflineQueue: false, maxRetriesPerRequest: null };
+    }
 };
+
+const connection = parseRedisUrl(process.env.REDIS_URL ?? "redis://127.0.0.1:6379");
 
 export const reviewQueue = new Queue<ReviewJobData>("github_pr_review", {
     connection,
@@ -23,4 +38,8 @@ export const reviewQueue = new Queue<ReviewJobData>("github_pr_review", {
         removeOnComplete: 100,
         removeOnFail: 200,
     },
+});
+
+reviewQueue.on("error", (err) => {
+    console.error("[queue] Redis connection error:", err.message);
 });
