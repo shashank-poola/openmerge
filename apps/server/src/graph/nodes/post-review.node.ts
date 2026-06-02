@@ -3,6 +3,7 @@ import { createAppAuth } from "@octokit/auth-app";
 import { db } from "@repo/database";
 import { env } from "../../config/env.config";
 import type { PRReviewStateType } from "../review.state";
+import { cleanupRepo } from "../context/clone-repo";
 
 const createInstallationOctokit = (githubInstallationId: string) => {
     return new Octokit({
@@ -90,6 +91,10 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
             data: { status: "FAILED", errorMessage: String(err), completedAt: new Date() },
         });
         return { error: String(err) };
+    } finally {
+        if (state.repoLocalPath) {
+            await cleanupRepo(state.repoLocalPath);
+        }
     }
 };
 
