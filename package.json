@@ -29,6 +29,7 @@
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@qdrant/js-client-rest": "^1.17.0",
+    "@radix-ui/react-slot": "^1.2.4",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
