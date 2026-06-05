@@ -92,5 +92,7 @@ export const webhookLimiter = rateLimit({
     max: 200,
     standardHeaders: true,
     legacyHeaders: false,
+    // GitHub sends requests from their IP range — key by delivery ID to avoid IP parsing errors
+    keyGenerator: (req: Request) => (req.headers["x-github-delivery"] as string) ?? "webhook",
     message: TOO_MANY,
 });

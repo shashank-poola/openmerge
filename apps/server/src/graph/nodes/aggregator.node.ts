@@ -8,6 +8,8 @@ const SEVERITY_RANK: Record<AgentComment["severity"], number> = {
     INFO: 1,
 };
 
+const MAX_COMMENTS = 12;
+
 export const aggregateComments = (state: PRReviewStateType): Partial<PRReviewStateType> => {
     const all = [
         ...state.codeComments,
@@ -27,5 +29,10 @@ export const aggregateComments = (state: PRReviewStateType): Partial<PRReviewSta
         (a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]
     );
 
-    return { allComments: sorted };
+    // Prioritize blocking comments, then cap total
+    const blocking = sorted.filter((c) => c.blocking !== false && SEVERITY_RANK[c.severity] >= 4);
+    const rest = sorted.filter((c) => !blocking.includes(c));
+    const capped = [...blocking, ...rest].slice(0, MAX_COMMENTS);
+
+    return { allComments: capped };
 };

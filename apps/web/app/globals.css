@@ -1,24 +1,63 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #111111;
-  --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-sans: 'Graphik Trial', 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+@theme {
+  --font-mono: 'Consolas', 'Menlo', 'Courier New', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --color-background: #141110;
+  --color-foreground: #eae8e6;
+  --color-muted: #211e1c;
+  --color-muted-foreground: #a5a09c;
+  --color-border: hsl(0 0% 100% / 0.102);
+  --color-primary: #f3f2f1;
+  --color-primary-foreground: #2c2826;
+  --color-secondary: #211e1c;
+  --color-secondary-foreground: #f3f2f1;
+  --color-tip-secondary: #795f5d;
+  --color-tip-secondary-border: #a4847f;
+  --color-tip-muted: #f0edea;
+  --color-git-green: hsl(142 69% 58%);
+  --color-git-red: hsl(0 91% 71%);
+  --color-git-blue: hsl(213 94% 68%);
+  --color-git-yellow: hsl(50 100% 75%);
+  --color-sidebar-background: #1a1715;
+  --color-sidebar-foreground: hsl(0 0% 100% / 0.9);
+  --color-sidebar-accent: hsl(0 0% 100% / 0.05);
+  --color-sidebar-muted-foreground: hsl(0 0% 100% / 0.6);
+  --color-sidebar-border: hsl(0 0% 100% / 0.102);
+}
+
+@font-face {
+  font-family: 'Consolas';
+  src: url('/fonts/Consolas.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Consolas';
+  src: url('/fonts/CONSOLAB.TTF') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Consolas';
+  src: url('/fonts/consolai.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
 }
 
 * {
   box-sizing: border-box;
 }
 
-em {
-  font-style: italic;
-  font-family: 'Instrument Serif', Georgia, serif;
+:root {
+  --git-new-line-bg: color-mix(in oklab, hsl(142 76% 44%) 10%, transparent);
+  --git-removed-line-bg: color-mix(in oklab, hsl(0 100% 45%) 10%, transparent);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: #141110;
+  color: #eae8e6;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

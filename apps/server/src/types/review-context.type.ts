@@ -6,6 +6,7 @@ export type AgentComment = {
     severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
     category: "BUG" | "SECURITY" | "PERFORMANCE" | "STYLE" | "REFACTOR" | "DOCUMENTATION" | "TEST" | "OTHER";
     suggestion?: string;
+    blocking?: boolean;
 };
 
 export type LinterIssue = {
