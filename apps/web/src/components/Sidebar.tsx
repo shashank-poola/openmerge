@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { LogoIcon, Wordmark } from './Logo';
 
 const repos = [
@@ -12,8 +11,6 @@ const repos = [
 ];
 
 export default function Sidebar() {
-  const pathname = usePathname();
-
   return (
     <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background text-sidebar-foreground">
       {/* Header */}

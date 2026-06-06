@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { signIn, signOut, useSession } from 'next-auth/react';
 
 const navLinks = [
@@ -17,13 +18,13 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-8 h-14 flex items-center justify-between">
 
                 {/* Logo */}
-                <a
+                <Link
                     href="/"
                     className="text-lg text-gray-950 tracking-tight"
                     style={{ fontFamily: 'var(--font-sans)', fontWeight: 700 }}
                 >
                     pullrabbit
-                </a>
+                </Link>
 
                 {/* Center pill nav */}
                 <div

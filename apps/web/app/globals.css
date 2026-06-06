@@ -4,6 +4,11 @@
   --font-mono: 'Consolas', 'Menlo', 'Courier New', monospace;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
+  --color-pr-paper: #fbfbfb;
+  --color-pr-ink: #2c2826;
+  --color-pr-charcoal: #2c2826;
+  --color-pr-muted: #696461;
+  --color-pr-copy: #5d5753;
   --color-background: #141110;
   --color-foreground: #eae8e6;
   --color-muted: #211e1c;
@@ -56,9 +61,9 @@
 }
 
 body {
-  background: #141110;
-  color: #eae8e6;
-  font-family: var(--font-sans);
+  background: #fbfbfb;
+  color: #2c2826;
+  font-family: var(--font-mono);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

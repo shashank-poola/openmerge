@@ -56,9 +56,7 @@ function VideoOnView() {
           try {
             videoEl.currentTime = 0;
             const playPromise = videoEl.play();
-            if (playPromise && typeof (playPromise as any).then === "function") {
-              (playPromise as Promise<void>).catch(() => {});
-            }
+            playPromise.catch(() => {});
           } catch {}
         } else {
           videoEl.pause();

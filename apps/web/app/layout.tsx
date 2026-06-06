@@ -3,8 +3,9 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Revue AI — AI-powered PR Reviews",
-  description: "Line-by-line suggestions, security flags, and context-aware feedback. Runs in your CI pipeline.",
+  title: "PullRabbit - AI PR Review Agents",
+  description:
+    "Parallel AI code review agents that inspect pull requests, flag issues, and prepare merge-ready summaries.",
 };
 
 export default function RootLayout({
@@ -13,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body>
         <Providers>{children}</Providers>
       </body>

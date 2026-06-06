@@ -110,6 +110,7 @@ const diffLines = [
 const aiComment = {
   afterLine: 17,
   severity: 'warning',
+  file: 'src/middleware/rate-limiter.ts:17',
   emoji: '⚠️',
   text: 'Race condition possible between',
   code: 'incr',
