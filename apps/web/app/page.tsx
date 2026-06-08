@@ -1,5 +1,7 @@
 import { AnnouncementBar } from "@/components/landing/AnnouncementBar";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { LandingDetails } from "@/components/landing/LandingDetails";
+import { LandingFooter } from "@/components/landing/LandingFooter";
 import { SiteHeader } from "@/components/landing/SiteHeader";
 
 export default function LandingPage() {
@@ -8,6 +10,8 @@ export default function LandingPage() {
       <AnnouncementBar />
       <SiteHeader />
       <HeroSection />
+      <LandingDetails />
+      <LandingFooter />
     </main>
   );
 }

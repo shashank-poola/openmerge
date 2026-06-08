@@ -13,10 +13,10 @@ export function ProductMockup() {
         <aside className="hidden border-r border-white/8 bg-[#1d1917] lg:block">
           <WindowControls />
           <div className="px-4 py-4">
-            <div className="mb-5 text-[17px] font-bold text-[#d8d2cd]">History</div>
+            <div className="mb-5 text-[17px] font-bold text-[#d8d2cd]">Reviews</div>
             <div className="mb-3 flex items-center justify-between text-[13px] font-bold text-[#89837d]">
-              <span>Workspaces</span>
-              <span>+ </span>
+              <span>Agents</span>
+              <span>+</span>
             </div>
             <div className="space-y-2">
               {workspaces.map((item, index) => (
@@ -71,7 +71,7 @@ export function ProductMockup() {
               <span>Ready for review</span>
             </div>
             <button className="rounded-[4px] bg-[#342d28] px-3 py-2 text-[12px] font-bold text-[#f0ece8]">
-              Create PR
+              Open PR
             </button>
           </div>
           <div className="px-5 py-4">

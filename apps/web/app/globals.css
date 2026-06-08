@@ -67,3 +67,19 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.dotm-pulse {
+  animation: dotm-pulse 1.25s ease-in-out infinite;
+}
+
+@keyframes dotm-pulse {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: scale(0.92);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

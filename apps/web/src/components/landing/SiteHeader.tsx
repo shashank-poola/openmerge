@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { PullRabbitMark } from "@/components/landing/brand/PullRabbitMark";
 
-const navItems = ["Changelog", "Docs", "Enterprise", "Join Us"];
+const navItems = [
+  { label: "Changelog", href: "#" },
+  { label: "Docs", href: "#" },
+  { label: "Features", href: "#features" },
+  { label: "CLI", href: "#cli" },
+];
 
 export function SiteHeader() {
   return (
@@ -12,17 +17,17 @@ export function SiteHeader() {
 
       <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
         {navItems.map((item) => (
-          <Link key={item} href="#" className="transition-colors hover:text-pr-ink">
-            {item}
+          <Link key={item.label} href={item.href} className="transition-colors hover:text-pr-ink">
+            {item.label}
           </Link>
         ))}
         <Link
-          href="/dashboard"
+          href="/signin"
           className="flex h-10 items-center gap-3 rounded-[8px] bg-pr-charcoal px-4 font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5"
         >
-          Download
+          Signin
           <kbd className="rounded-[7px] border border-white/20 bg-white/20 px-2 py-1 text-[13px] font-normal leading-none text-white/85">
-            D
+            S
           </kbd>
         </Link>
       </nav>

@@ -1,11 +1,5 @@
-import Navbar from "@/components/Navbar";
-import SignInCard from "@/components/auth/SignInCard";
+import { SignInScreen } from "@/components/auth/SignInScreen";
 
 export default function SignInPage() {
-  return (
-    <>
-      <Navbar />
-      <SignInCard />
-    </>
-  );
+  return <SignInScreen />;
 }
