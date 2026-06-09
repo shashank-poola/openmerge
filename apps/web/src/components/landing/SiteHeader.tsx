@@ -2,33 +2,36 @@ import Link from "next/link";
 import { PullRabbitMark } from "@/components/landing/brand/PullRabbitMark";
 
 const navItems = [
-  { label: "Changelog", href: "#" },
+  { label: "GitHub [2.1K]", href: "https://github.com/pullrabbit/pullrabbit" },
   { label: "Docs", href: "#" },
+  { label: "Changelog", href: "#" },
   { label: "Features", href: "#features" },
   { label: "CLI", href: "#cli" },
 ];
 
 export function SiteHeader() {
   return (
-    <header className="mx-auto flex h-28 w-full max-w-[1512px] items-start justify-between px-7 pt-5 font-mono text-[16px] text-pr-muted md:px-12 lg:px-[196px]">
-      <Link href="/" aria-label="PullRabbit home" className="mt-3 block">
-        <PullRabbitMark />
+    <header className="flex h-14 w-full items-center justify-between border-b border-white/8 px-10 text-[14px]">
+      <Link href="/" aria-label="PullRabbit home" className="flex items-center gap-2.5">
+        <PullRabbitMark color="light" />
+        <span className="font-bold text-white tracking-tight">pullrabbit</span>
       </Link>
 
-      <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
+      <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
         {navItems.map((item) => (
-          <Link key={item.label} href={item.href} className="transition-colors hover:text-pr-ink">
+          <Link
+            key={item.label}
+            href={item.href}
+            className="text-[#777] transition-colors hover:text-white"
+          >
             {item.label}
           </Link>
         ))}
         <Link
           href="/signin"
-          className="flex h-10 items-center gap-3 rounded-[8px] bg-pr-charcoal px-4 font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5"
+          className="flex h-8 items-center rounded border border-white/20 px-4 text-[13px] text-white transition-colors hover:bg-white hover:text-black"
         >
-          Signin
-          <kbd className="rounded-[7px] border border-white/20 bg-white/20 px-2 py-1 text-[13px] font-normal leading-none text-white/85">
-            S
-          </kbd>
+          Sign in
         </Link>
       </nav>
     </header>

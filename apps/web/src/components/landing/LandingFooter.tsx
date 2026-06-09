@@ -1,33 +1,35 @@
 import Link from "next/link";
 
-const groups = [
-  { title: "Company", links: ["Blog", "Features", "CLI"] },
-  { title: "Resources", links: ["Docs", "Workflows", "Changelog", "Brand kit"] },
-  { title: "Compare", links: ["Compare tools", "PullRabbit vs Copilot", "PullRabbit vs Codex"] },
-  { title: "Legal", links: ["Privacy", "Terms"] },
-  { title: "Connect", links: ["X", "YouTube", "GitHub"] },
+const footerLinks = [
+  { label: "GitHub [2.1K]", href: "https://github.com/pullrabbit/pullrabbit" },
+  { label: "Docs", href: "#" },
+  { label: "Changelog", href: "#" },
+  { label: "Discord", href: "#" },
+  { label: "X", href: "#" },
 ];
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-white/10 bg-[#1d1917] px-6 py-20 font-mono text-[#d7cfca] md:px-12">
-      <div className="mx-auto grid max-w-[1440px] gap-12 md:grid-cols-5">
-        {groups.map((group) => (
-          <div key={group.title}>
-            <p className="mb-6">[{group.title}]</p>
-            <ul className="space-y-4 text-white">
-              {group.links.map((link) => (
-                <li key={link}>
-                  <Link href="#" className="transition-opacity hover:opacity-70">
-                    {link}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+    <footer className="border-t border-white/8">
+      <div className="grid grid-cols-2 divide-x divide-white/8 border-b border-white/8 md:grid-cols-5">
+        {footerLinks.map((link) => (
+          <Link
+            key={link.label}
+            href={link.href}
+            className="flex items-center justify-center py-6 text-[13px] text-[#555] transition-colors hover:text-white"
+          >
+            {link.label}
+          </Link>
         ))}
       </div>
-      <div className="mx-auto mt-20 max-w-[1440px] text-[#d7cfca]">© 2026 PullRabbit Labs</div>
+      <div className="flex flex-wrap items-center justify-between gap-4 px-10 py-5 text-[12px] text-[#444]">
+        <span>©2026 PullRabbit Labs</span>
+        <div className="flex gap-5">
+          <Link href="#" className="transition-colors hover:text-[#888]">Brand</Link>
+          <Link href="#" className="transition-colors hover:text-[#888]">Privacy</Link>
+          <Link href="#" className="transition-colors hover:text-[#888]">Terms</Link>
+        </div>
+      </div>
     </footer>
   );
 }
