@@ -34,15 +34,27 @@ export const cloneRepo = async (params: {
 
     const cloneUrl = `https://x-access-token:${token}@github.com/${params.owner}/${params.repoName}.git`;
 
-    await execAsync(`git clone --depth 50 --no-tags "${cloneUrl}" .`, {
+    await execAsync(`git clone --depth 50 --no-tags --no-single-branch "${cloneUrl}" .`, {
         cwd: localPath,
         timeout: 120_000,
     });
 
-    await execAsync(`git checkout ${params.headSha}`, {
-        cwd: localPath,
-        timeout: 30_000,
-    });
+    try {
+        await execAsync(`git checkout ${params.headSha}`, {
+            cwd: localPath,
+            timeout: 30_000,
+        });
+    } catch {
+        // Commit not in shallow clone — fetch it directly then checkout
+        await execAsync(`git fetch --depth 1 origin ${params.headSha}`, {
+            cwd: localPath,
+            timeout: 60_000,
+        });
+        await execAsync(`git checkout ${params.headSha}`, {
+            cwd: localPath,
+            timeout: 30_000,
+        });
+    }
 
     return { localPath, token };
 };

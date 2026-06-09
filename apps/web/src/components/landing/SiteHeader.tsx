@@ -39,13 +39,11 @@ export function SiteHeader() {
         ))}
 
         <a
-          href="https://github.com/apps/pull-rabbit/installations/select_target"
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1/auth/github`}
           className="group flex h-8 items-center gap-1.5 bg-white px-4 text-[12px] font-bold text-black
             transition-all duration-150 hover:bg-[#e8e8e8] active:scale-[0.97]"
         >
-          Install
+          Sign in
           <span className="transition-transform duration-150 group-hover:translate-x-0.5">→</span>
         </a>
       </nav>

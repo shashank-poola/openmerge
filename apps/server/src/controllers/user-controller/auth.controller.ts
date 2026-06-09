@@ -79,6 +79,90 @@ export const login = async (req: Request, res: Response) => {
     }
 }
 
+export const githubStart = (_req: Request, res: Response) => {
+    const params = new URLSearchParams({
+        client_id: env.GITHUB_CLIENT_ID,
+        redirect_uri: env.GITHUB_CALLBACK_URL,
+        scope: 'user:email read:user',
+    });
+    return res.redirect(`https://github.com/login/oauth/authorize?${params.toString()}`);
+};
+
+export const githubExchange = async (req: Request, res: Response) => {
+    try {
+        const { code } = req.body as { code?: string };
+        if (!code) {
+            return res.status(400).json({ success: false, error: 'MISSING_CODE' });
+        }
+
+        const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+            method: 'POST',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                client_id: env.GITHUB_CLIENT_ID,
+                client_secret: env.GITHUB_CLIENT_SERVER,
+                code,
+                redirect_uri: env.GITHUB_CALLBACK_URL,
+            }),
+        });
+
+        if (!tokenRes.ok) {
+            return res.status(502).json({ success: false, error: 'TOKEN_EXCHANGE_FAILED' });
+        }
+
+        const tokenData = await tokenRes.json() as { access_token?: string; error?: string };
+        if (!tokenData.access_token || tokenData.error) {
+            return res.status(401).json({ success: false, error: tokenData.error ?? 'TOKEN_NOT_RECEIVED' });
+        }
+
+        const profileRes = await fetch('https://api.github.com/user', {
+            headers: {
+                Accept: 'application/vnd.github+json',
+                Authorization: `Bearer ${tokenData.access_token}`,
+                'User-Agent': 'pullrabbit-server',
+            },
+        });
+
+        if (!profileRes.ok) {
+            return res.status(502).json({ success: false, error: 'FAILED_FETCHING_PROFILE' });
+        }
+
+        const profile = await profileRes.json() as {
+            id: number | string;
+            login: string;
+            email?: string | null;
+            name?: string | null;
+            avatar_url?: string | null;
+        };
+
+        const parsedUser = userSchema.parse({
+            githubUserId: profile.id,
+            githubLogin: profile.login,
+            email: profile.email ?? null,
+            name: profile.name ?? null,
+            avatarUrl: profile.avatar_url ?? null,
+        });
+
+        const myUser = await upsertUserFromGithubData(parsedUser);
+        const token = jwt.sign({
+            name: myUser.name,
+            email: myUser.email,
+            userId: myUser.id,
+            githubLogin: myUser.githubLogin,
+        }, SERVER_JWT_SECRET, { expiresIn: '7d' });
+
+        return res.status(200).json({
+            success: true,
+            user: githubUser(myUser),
+            token,
+        });
+
+    } catch (err) {
+        console.error('GitHub exchange failed:', err);
+        return res.status(500).json({ success: false, error: 'EXCHANGE_FAILED' });
+    }
+};
+
 export const githubCallback = async (req: Request, res: Response) => {
     try {
         const code = typeof req.query.code === 'string' ? req.query.code : null;

@@ -15,144 +15,78 @@ const createInstallationOctokit = (githubInstallationId: string) =>
         },
     });
 
-const SEVERITY_EMOJI: Record<AgentComment["severity"], string> = {
-    CRITICAL: "🔴",
-    HIGH: "🟠",
-    MEDIUM: "🟡",
-    LOW: "🔵",
-    INFO: "⚪",
+type Section = { emoji: string; label: string; caution: string };
+
+const CATEGORY_SECTION: Record<AgentComment["category"], Section> = {
+    BUG:           { emoji: "🔍", label: "Potential Issues Found",   caution: "critical bugs" },
+    SECURITY:      { emoji: "🔒", label: "Security Issues",          caution: "security vulnerabilities" },
+    PERFORMANCE:   { emoji: "⚡", label: "Performance Optimization", caution: "performance issues" },
+    REFACTOR:      { emoji: "💡", label: "Code Suggestions",         caution: "code quality improvements" },
+    STYLE:         { emoji: "💡", label: "Code Suggestions",         caution: "code quality improvements" },
+    DOCUMENTATION: { emoji: "📝", label: "Documentation",            caution: "documentation gaps" },
+    TEST:          { emoji: "🧪", label: "Test Coverage",            caution: "test coverage gaps" },
+    OTHER:         { emoji: "💡", label: "Other",                    caution: "other issues" },
 };
 
-const SEVERITY_LABEL: Record<AgentComment["severity"], string> = {
-    CRITICAL: "Critical",
-    HIGH: "High",
-    MEDIUM: "Medium",
-    LOW: "Low",
-    INFO: "Info",
-};
+const SECTION_ORDER: AgentComment["category"][] = [
+    "BUG", "SECURITY", "PERFORMANCE", "REFACTOR", "STYLE", "DOCUMENTATION", "TEST", "OTHER",
+];
 
-const CATEGORY_LABEL: Record<AgentComment["category"], string> = {
-    BUG: "Bug",
-    SECURITY: "Security",
-    PERFORMANCE: "Performance",
-    STYLE: "Style",
-    REFACTOR: "Refactor",
-    DOCUMENTATION: "Documentation",
-    TEST: "Test",
-    OTHER: "Other",
-};
-
-const formatCommentBody = (c: AgentComment): string => {
-    const emoji = SEVERITY_EMOJI[c.severity];
-    const severityLabel = SEVERITY_LABEL[c.severity];
-    const categoryLabel = CATEGORY_LABEL[c.category];
-    const blockingLabel = c.blocking === true ? "**blocking**" : "non-blocking";
-
-    const lines: string[] = [
-        `> ${emoji} **${severityLabel} · ${categoryLabel}** · ${blockingLabel}`,
-        "",
-        c.body,
-    ];
-
-    if (c.suggestion) {
-        lines.push("", "**Suggested fix:**", "", "```", c.suggestion, "```");
-    }
-
-    lines.push("", "---", "*[PullRabbit](https://github.com/apps/pull-rabbit) · AI code review*");
-    return lines.join("\n");
-};
-
-const buildWalkthroughSummary = (state: PRReviewStateType, comments: AgentComment[], durationMs: number): string => {
-    const counts: Record<AgentComment["severity"], number> = {
-        CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, INFO: 0,
-    };
-    for (const c of comments) counts[c.severity]++;
-
-    const blockingCount = comments.filter((c) => c.blocking === true).length;
-    const totalIssues = comments.length;
-
-    const severityRows = (["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"] as const)
-        .filter((s) => counts[s] > 0)
-        .map((s) => `| ${SEVERITY_EMOJI[s]} ${SEVERITY_LABEL[s]} | ${counts[s]} |`)
-        .join("\n");
-
-    const fileList = state.changedFiles
-        .slice(0, 10)
-        .map((f) => {
-            const fileComments = comments.filter((c) => c.filePath === f || c.filePath.endsWith(f));
-            const fileIssues = fileComments.length > 0 ? ` · ${fileComments.length} issue${fileComments.length > 1 ? "s" : ""}` : "";
-            return `- \`${f}\`${fileIssues}`;
-        })
-        .join("\n");
-
-    const moreFiles = state.changedFiles.length > 10 ? `\n- *...and ${state.changedFiles.length - 10} more files*` : "";
-
-    const verdict = counts.CRITICAL > 0 || counts.HIGH > 0
-        ? "⛔ **Changes requested** — blocking issues must be resolved before merging."
-        : totalIssues > 0
-            ? "⚠️ **Review comments posted** — non-blocking issues noted for your attention."
-            : "✅ **Looks good!** — No issues found in this pull request.";
-
+const buildComment = (state: PRReviewStateType, comments: AgentComment[], durationMs: number): string => {
+    const blockingCount = comments.filter((c) => c.blocking).length;
+    const hasCriticalOrHigh = comments.some((c) => c.severity === "CRITICAL" || c.severity === "HIGH");
     const durationSec = (durationMs / 1000).toFixed(1);
 
-    const lines = [
-        "## 🐰 PullRabbit Review",
-        "",
-        verdict,
-        "",
-    ];
+    const verdict = hasCriticalOrHigh
+        ? "⛔ **Changes requested** — blocking issues must be resolved before merging."
+        : comments.length > 0
+            ? "⚠️ **Review complete** — issues noted for your attention."
+            : "✅ **Looks good!** — No issues found.";
 
-    if (state.changedFiles.length > 0) {
-        lines.push("### Files reviewed");
-        lines.push(fileList + moreFiles);
+    const lines: string[] = ["## Code Review", "", verdict, ""];
+
+    if (blockingCount > 0) {
+        lines.push(`> [!CAUTION]`);
+        lines.push(`> ${blockingCount} blocking issue${blockingCount > 1 ? "s" : ""} must be fixed before this PR can merge.`);
         lines.push("");
     }
 
-    if (totalIssues > 0) {
-        lines.push("### Issues found");
-        lines.push("| Severity | Count |");
-        lines.push("|----------|-------|");
-        lines.push(severityRows);
-        lines.push("");
+    // Group by category, deduplicate merged labels (REFACTOR+STYLE both → "Code Suggestions")
+    const rendered = new Set<string>();
+    for (const cat of SECTION_ORDER) {
+        const catComments = comments.filter((c) => c.category === cat);
+        if (catComments.length === 0) continue;
 
-        if (blockingCount > 0) {
-            lines.push(`> 🚨 **${blockingCount} blocking issue${blockingCount > 1 ? "s" : ""} must be fixed before this PR can merge.**`);
+        const { emoji, label, caution } = CATEGORY_SECTION[cat];
+        if (rendered.has(label)) {
+            // already rendered this section label (e.g. STYLE after REFACTOR) — append to existing
+            // just add items without re-printing header
+        } else {
+            rendered.add(label);
+            lines.push(`### ${emoji} ${label}`);
+            lines.push(`> [!CAUTION]`);
+            lines.push(`> Found ${catComments.length} ${caution} to review.`);
+            lines.push("");
+            lines.push("**Issues:**");
             lines.push("");
         }
+
+        for (const c of catComments) {
+            const fileName = c.filePath.split("/").pop() ?? c.filePath;
+            const blocking = c.blocking ? " · **blocking**" : "";
+            lines.push(`- \`${fileName}:${c.line}\`${blocking} — ${c.body}`);
+            if (c.suggestion) {
+                const fix = c.suggestion.trim().replace(/\n/g, " ").slice(0, 150);
+                lines.push(`  - **Fix:** \`${fix}\``);
+            }
+        }
+        lines.push("");
     }
 
-    lines.push(`<sub>Reviewed ${state.changedFiles.length} file${state.changedFiles.length !== 1 ? "s" : ""} in ${durationSec}s · [PullRabbit](https://github.com/apps/pull-rabbit)</sub>`);
+    lines.push("---");
+    lines.push(`*Reviewed ${state.changedFiles.length} file${state.changedFiles.length !== 1 ? "s" : ""} in ${durationSec}s · Generated by [PullRabbit](https://github.com/apps/pull-rabbit)*`);
 
     return lines.join("\n");
-};
-
-const postWalkthrough = async (
-    octokit: Octokit,
-    state: PRReviewStateType,
-    loadingCommentId: bigint | null,
-    comments: AgentComment[],
-    durationMs: number,
-): Promise<void> => {
-    const body = buildWalkthroughSummary(state, comments, durationMs);
-    try {
-        if (loadingCommentId) {
-            await octokit.rest.issues.updateComment({
-                owner: state.owner,
-                repo: state.repoName,
-                comment_id: Number(loadingCommentId),
-                body,
-            });
-        } else {
-            await octokit.rest.issues.createComment({
-                owner: state.owner,
-                repo: state.repoName,
-                issue_number: state.prNumber,
-                body,
-            });
-        }
-    } catch {
-        // best-effort
-    }
 };
 
 export const postReview = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
@@ -184,7 +118,7 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
                         owner: state.owner,
                         repo: state.repoName,
                         comment_id: Number(loadingCommentId),
-                        body: "**PullRabbit** encountered an error during review. Please try again or check the configuration.",
+                        body: "**PullRabbit** encountered an error during review. Please try again.",
                     });
                 } catch { /* best-effort */ }
             }
@@ -192,47 +126,40 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
         }
 
         const comments = state.allComments;
+        const body = buildComment(state, comments, totalDurationMs);
 
-        // Always post the walkthrough summary (replaces loading comment)
-        await postWalkthrough(octokit, state, loadingCommentId, comments, totalDurationMs);
+        try {
+            if (loadingCommentId) {
+                await octokit.rest.issues.updateComment({
+                    owner: state.owner,
+                    repo: state.repoName,
+                    comment_id: Number(loadingCommentId),
+                    body,
+                });
+            } else {
+                await octokit.rest.issues.createComment({
+                    owner: state.owner,
+                    repo: state.repoName,
+                    issue_number: state.prNumber,
+                    body,
+                });
+            }
+        } catch { /* best-effort */ }
 
-        if (comments.length === 0) {
-            await db.reviewSession.update({
-                where: { id: state.reviewSessionId },
-                data: { status: "COMPLETED", filesReviewed: state.changedFiles.length, totalComments: 0, completedAt: new Date() },
+        if (comments.length > 0) {
+            await db.reviewComment.createMany({
+                data: comments.map((c) => ({
+                    reviewSessionId: state.reviewSessionId,
+                    filePath: c.filePath,
+                    line: c.line,
+                    startLine: c.startLine ?? null,
+                    body: c.body,
+                    severity: c.severity,
+                    category: c.category,
+                    suggestion: c.suggestion ?? null,
+                })),
             });
-            return {};
         }
-
-        const reviewRes = await octokit.rest.pulls.createReview({
-            owner: state.owner,
-            repo: state.repoName,
-            pull_number: state.prNumber,
-            commit_id: state.headSha,
-            event: "COMMENT",
-            comments: comments.map((c) => ({
-                path: c.filePath,
-                line: c.line,
-                side: "RIGHT" as const,
-                ...(c.startLine && c.startLine < c.line
-                    ? { start_line: c.startLine, start_side: "RIGHT" as const }
-                    : {}),
-                body: formatCommentBody(c),
-            })),
-        });
-
-        await db.reviewComment.createMany({
-            data: comments.map((c) => ({
-                reviewSessionId: state.reviewSessionId,
-                filePath: c.filePath,
-                line: c.line,
-                startLine: c.startLine ?? null,
-                body: c.body,
-                severity: c.severity,
-                category: c.category,
-                suggestion: c.suggestion ?? null,
-            })),
-        });
 
         await db.reviewSession.update({
             where: { id: state.reviewSessionId },
@@ -240,7 +167,6 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
                 status: "COMPLETED",
                 filesReviewed: state.changedFiles.length,
                 totalComments: comments.length,
-                githubReviewId: BigInt(reviewRes.data.id),
                 completedAt: new Date(),
             },
         });

@@ -9,10 +9,10 @@ export const upsertUserFromGithubData = async (data: {
 }) => {
     return db.user.upsert({
         where: {
-            githubUserId: data.githubUserId,
+            githubLogin: data.githubLogin,
         },
         update: {
-            githubLogin: data.githubLogin,
+            githubUserId: data.githubUserId,
             email: data.email,
             name: data.name ?? null,
             avatarUrl: data.avatarUrl ?? null,

@@ -10,20 +10,22 @@ export const invokeLLM = async (
     messages: BaseLanguageModelInput,
     task: Task = "codeReview"
 ): Promise<{ content: string; provider: "openrouter" | "groq" }> => {
-    if (hasOpenRouter()) {
-        try {
-            const response = await openRouterForTask(task).invoke(messages);
-            return { content: response.content as string, provider: "openrouter" };
-        } catch (err) {
-            console.warn(`OpenRouter failed for [${task}], falling back to Groq:`, (err as Error).message);
-        }
+    try {
+        const response = await groqForTask(task).invoke(messages);
+        return { content: response.content as string, provider: "groq" };
+    } catch (err) {
+        console.warn(`Groq failed for [${task}], falling back to OpenRouter:`, (err as Error).message);
     }
 
-    const response = await groqForTask(task).invoke(messages);
-    return { content: response.content as string, provider: "groq" };
+    if (hasOpenRouter()) {
+        const response = await openRouterForTask(task).invoke(messages);
+        return { content: response.content as string, provider: "openrouter" };
+    }
+
+    throw new Error(`All LLM providers failed for task: ${task}`);
 };
 
 export const getLLM = (task: Task = "codeReview") => ({
-    primary: hasOpenRouter() ? openRouterForTask(task) : groqForTask(task),
-    fallback: groqForTask(task),
+    primary: groqForTask(task),
+    fallback: hasOpenRouter() ? openRouterForTask(task) : groqForTask(task),
 });
