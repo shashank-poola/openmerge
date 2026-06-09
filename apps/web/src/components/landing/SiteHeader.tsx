@@ -3,7 +3,7 @@ import Link from "next/link";
 const navItems = [
   { label: "Features", href: "#features" },
   { label: "PullRabbit Vs", href: "#competitors" },
-  { label: "Docs", href: "#" },
+  { label: "Docs", href: "/docs" },
   { label: "GitHub", href: "https://github.com/pullrabbit/pullrabbit" },
 ];
 

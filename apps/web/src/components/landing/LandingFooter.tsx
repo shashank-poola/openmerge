@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const footerLinks = [
   { label: "GitHub [2.1K]", href: "https://github.com/pullrabbit/pullrabbit" },
-  { label: "Docs", href: "#" },
+  { label: "Docs", href: "/docs" },
   { label: "Changelog", href: "#" },
   { label: "Discord", href: "#" },
   { label: "X", href: "#" },
@@ -26,8 +26,8 @@ export function LandingFooter() {
         <span>©2026 PullRabbit Labs</span>
         <div className="flex gap-5">
           <Link href="#" className="transition-colors hover:text-[#888]">Brand</Link>
-          <Link href="#" className="transition-colors hover:text-[#888]">Privacy</Link>
-          <Link href="#" className="transition-colors hover:text-[#888]">Terms</Link>
+          <Link href="/privacy" className="transition-colors hover:text-[#888]">Privacy</Link>
+          <Link href="/terms" className="transition-colors hover:text-[#888]">Terms</Link>
         </div>
       </div>
     </footer>

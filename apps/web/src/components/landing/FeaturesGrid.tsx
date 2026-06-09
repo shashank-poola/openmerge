@@ -34,24 +34,31 @@ export function FeaturesGrid() {
         {features.map((feature, i) => (
           <div
             key={feature.name}
-            className={`flex flex-col border-white/8 ${
+            className={`flex items-stretch border-white/8 ${
               i % 2 === 0 ? "md:border-r" : ""
-            } ${i < 2 ? "md:border-b" : ""}`}
+            } ${i < 2 ? "border-b" : ""}`}
           >
-            <div className="px-10 pt-10 pb-6">
-              <p className="mb-1 text-[11px] text-[#555] select-none">[*]</p>
-              <h3 className="mb-3 text-[16px] font-bold text-white">{feature.name}</h3>
-              <p className="text-[13px] leading-relaxed text-[#777]">{feature.description}</p>
-            </div>
-            <div className="mt-auto overflow-hidden border-t border-white/8">
+            {/* GIF — left column, fixed width */}
+            <div className="w-[160px] shrink-0 overflow-hidden border-r border-white/8">
               <Image
                 src={feature.gif}
                 alt={feature.name}
-                width={550}
-                height={310}
-                className="w-full"
+                width={160}
+                height={180}
+                className="h-full w-full object-cover"
                 unoptimized
               />
+            </div>
+
+            {/* Text — right column */}
+            <div className="flex flex-1 flex-col justify-center px-7 py-7">
+              <p className="mb-1 text-[11px] text-[#555] select-none">[*]</p>
+              <h3 className="mb-2 text-[14px] font-bold text-white leading-snug">
+                {feature.name}
+              </h3>
+              <p className="text-[12px] leading-relaxed text-[#666]">
+                {feature.description}
+              </p>
             </div>
           </div>
         ))}

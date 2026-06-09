@@ -1,0 +1,59 @@
+---
+title: Introduction
+section: Getting Started
+---
+
+# Introduction
+
+PullRabbit is an AI-powered GitHub PR reviewer. Install it as a GitHub App,
+and it automatically reviews every pull request using three specialized agents.
+
+## Overview
+
+PullRabbit connects to your GitHub repositories via a GitHub App and reviews
+pull requests automatically. When a PR is opened, PullRabbit runs security,
+performance, and code quality agents in parallel, then posts inline comments
+directly on the diff.
+
+## Key capabilities
+
+- **Multi-agent parallel review:** Three specialized agents run simultaneously on every PR.
+- **Inline diff comments:** AI findings are posted as line-level review comments.
+- **GitHub App integration:** Installs in 30 seconds. Webhooks trigger reviews automatically.
+- **Unified dashboard:** See every open PR and its review status across all repositories.
+- **Configurable rules:** Ignore paths, adjust severity thresholds, disable specific agents per repo.
+
+## How PullRabbit Works
+
+When a pull request is opened or updated, GitHub sends a webhook to PullRabbit.
+The server validates the signature, creates a review job, and queues it for the worker.
+
+The worker runs three agents in parallel:
+
+- The **Code Quality Agent** checks for bugs, dead code, naming issues, and style violations.
+- The **Security Agent** scans for injection risks, exposed secrets, insecure dependencies, and OWASP top 10 patterns.
+- The **Performance Agent** identifies N+1 queries, unnecessary allocations, and algorithmic complexity issues.
+
+## Installation
+
+1. Sign in at [pullrabbit.dev](https://pullrabbit.dev) with your GitHub account.
+2. Authorize PullRabbit and select the repositories to review.
+3. Open a pull request — PullRabbit will post a review automatically.
+
+## Configuration
+
+Add a `.pullrabbit.yml` file to the root of your repository:
+
+```yaml
+agents:
+  code_quality: true
+  security: true
+  performance: true
+
+ignore:
+  - "**/*.test.ts"
+  - "migrations/**"
+  - "*.generated.*"
+
+severity_threshold: warning
+```

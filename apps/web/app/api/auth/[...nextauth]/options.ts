@@ -1,6 +1,7 @@
-import { Account, AuthOptions, ISODateString } from 'next-auth';
+import type { Account, AuthOptions, ISODateString, Profile } from 'next-auth';
 import GithubProvider from 'next-auth/providers/github';
 import { JWT } from 'next-auth/jwt';
+import { SIGNIN_URL } from '@/routes/apiRoute';
 
 export interface UserType {
     id?: string | null;
@@ -9,12 +10,19 @@ export interface UserType {
     image?: string | null;
     provider?: string | null;
     token?: string | null;
+    githubLogin?: string | null;
 }
 
 export interface CustomSession {
     user?: UserType;
     expires: ISODateString;
 }
+
+type GitHubProfile = Profile & {
+    login?: string;
+    avatar_url?: string;
+    id?: number | string;
+};
 
 export const authOption: AuthOptions = {
     pages: {
@@ -24,27 +32,56 @@ export const authOption: AuthOptions = {
         async signIn({
             user,
             account,
+            profile,
         }: {
             user: UserType;
             account: Account | null;
+            profile?: Profile;
         }) {
+            if (account?.provider !== 'github') return false;
+
+            const ghProfile = profile as GitHubProfile | undefined;
+
+            user.provider = 'github';
+            user.githubLogin = ghProfile?.login ?? user.name;
+
             try {
-                if (account?.provider === 'github') {
-                    user.provider = 'github';
-                    return true;
+                const res = await fetch(SIGNIN_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user: {
+                            githubUserId: account.providerAccountId,
+                            githubLogin: ghProfile?.login ?? user.name,
+                            email: user.email,
+                            name: user.name,
+                            avatarUrl: ghProfile?.avatar_url ?? user.image,
+                        },
+                    }),
+                });
+
+                if (res.ok) {
+                    const data = await res.json() as { success: boolean; token?: string };
+                    if (data.success && data.token) {
+                        user.token = data.token;
+                    }
+                } else {
+                    console.warn('[auth] backend signin non-ok:', res.status);
                 }
-                return false;
             } catch (err) {
-                console.error(err);
-                return false;
+                console.warn('[auth] backend unreachable, proceeding without server JWT:', err);
             }
+
+            return true;
         },
+
         async jwt({ token, user }) {
             if (user) {
                 token.user = user as UserType;
             }
             return token;
         },
+
         async session({
             session,
             token,
@@ -58,8 +95,8 @@ export const authOption: AuthOptions = {
     },
     providers: [
         GithubProvider({
-            clientId: process.env.GITHUB_CLIENT_ID || '',
-            clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
+            clientId: process.env.GITHUB_CLIENT_ID ?? '',
+            clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
         }),
     ],
 };
