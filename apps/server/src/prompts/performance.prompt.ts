@@ -106,7 +106,7 @@ export const PERFORMANCE_HUMAN = (params: {
             .filter((n) => n.calledBy.length <= 1)
             .map(
                 (n) =>
-                    `  ${n.functionName} (${n.filePath}) — ${n.calledBy.length === 0 ? "no known callers (may be entry point)" : `called by: ${n.calledBy[0].functionName}`}`
+                    `  ${n.functionName} (${n.filePath}) — ${n.calledBy.length === 0 ? "no known callers (may be entry point)" : `called by: ${n.calledBy[0]?.functionName ?? "unknown"}`}`
             );
 
         const graphLines = [...hotPaths, ...coldPaths];
