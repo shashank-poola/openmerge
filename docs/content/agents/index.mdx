@@ -1,0 +1,32 @@
+---
+title: Agents & Rules
+description: How PullRabbit's three specialized review agents work.
+---
+
+# Agents & Rules
+
+PullRabbit runs three specialized agents in parallel on every pull request.
+
+## Code Quality Agent
+
+Checks for bugs, dead code, naming issues, and style violations.
+
+- Detects unreachable code and dead branches
+- Flags unclear variable names and anti-patterns
+- Reports missing error handling at boundaries
+
+## Security Agent
+
+Scans for injection risks, exposed secrets, insecure dependencies, and OWASP top 10 patterns.
+
+- SQL injection, XSS, and command injection vectors
+- Hardcoded secrets and API keys
+- Insecure direct object references
+
+## Performance Agent
+
+Identifies N+1 queries, unnecessary allocations, and algorithmic complexity issues.
+
+- Database N+1 query patterns
+- Unnecessary re-renders in React components
+- O(n²) loops that can be optimized

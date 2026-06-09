@@ -31,9 +31,9 @@ export function LandingFooter() {
           <Image
             src="/pullrabbit/reclogo.png"
             alt="PullRabbit"
-            width={100}
-            height={24}
-            className="h-6 w-auto opacity-40"
+            width={160}
+            height={50}
+            className="h-12 w-auto opacity-50"
           />
         </Link>
         <div className="flex gap-5">

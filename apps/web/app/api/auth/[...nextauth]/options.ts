@@ -1,28 +1,10 @@
-import type { Account, AuthOptions, ISODateString, Profile } from 'next-auth';
+import type { Account, AuthOptions, Profile } from 'next-auth';
 import GithubProvider from 'next-auth/providers/github';
 import { JWT } from 'next-auth/jwt';
 import { SIGNIN_URL } from '@/routes/apiRoute';
+import type { UserType, CustomSession, GitHubProfile } from '@/types/auth';
 
-export interface UserType {
-    id?: string | null;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    provider?: string | null;
-    token?: string | null;
-    githubLogin?: string | null;
-}
-
-export interface CustomSession {
-    user?: UserType;
-    expires: ISODateString;
-}
-
-type GitHubProfile = Profile & {
-    login?: string;
-    avatar_url?: string;
-    id?: number | string;
-};
+export type { UserType, CustomSession };
 
 export const authOption: AuthOptions = {
     pages: {

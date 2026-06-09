@@ -18,9 +18,9 @@ export function SiteHeader() {
         <Image
           src="/pullrabbit/reclogo.png"
           alt="PullRabbit"
-          width={120}
-          height={28}
-          className="h-7 w-auto"
+          width={160}
+          height={50}
+          className="h-12 w-auto"
           priority
         />
       </Link>
@@ -37,13 +37,6 @@ export function SiteHeader() {
             {item.label}
           </Link>
         ))}
-
-        <Link
-          href="/signin"
-          className="text-[13px] text-[#555] transition-colors duration-150 hover:text-white"
-        >
-          Sign in
-        </Link>
 
         <a
           href="https://github.com/apps/pull-rabbit/installations/select_target"

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { PageShell } from "@/components/layout/PageShell";
 
@@ -44,8 +45,8 @@ export function TermsPage() {
   return (
     <PageShell>
       <header className="flex h-14 items-center justify-between border-b border-white/8 px-10 text-[13px]">
-        <Link href="/" className="font-bold text-white tracking-tight">
-          pullrabbit
+        <Link href="/" className="transition-opacity hover:opacity-80">
+          <Image src="/pullrabbit/reclogo.png" alt="PullRabbit" width={160} height={50} className="h-[44px] w-auto" />
         </Link>
         <Link href="/" className="text-[#555] hover:text-white">
           ← Back to home

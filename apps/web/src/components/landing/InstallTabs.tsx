@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useClipboard } from "@/hooks/useClipboard";
 
 const tabs = [
   { id: "npm",  label: "npm",  command: "npm install -g pullrabbit" },
@@ -11,14 +12,8 @@ const tabs = [
 
 export function InstallTabs() {
   const [activeTab, setActiveTab] = useState("npm");
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useClipboard();
   const activeCommand = tabs.find((t) => t.id === activeTab)?.command ?? "";
-
-  const copy = () => {
-    navigator.clipboard.writeText(activeCommand);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="w-full max-w-[580px]">
@@ -46,7 +41,7 @@ export function InstallTabs() {
           {activeCommand}
         </code>
         <button
-          onClick={copy}
+          onClick={() => copy(activeCommand)}
           className="ml-4 shrink-0 px-2 py-1 text-[11px] text-[#555] transition-colors duration-150 hover:text-white"
         >
           {copied ? "Copied!" : "Copy"}

@@ -1,29 +1,28 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { PageShell } from "@/components/layout/PageShell";
+import { useClipboard } from "@/hooks/useClipboard";
 
 export function AccountScreen() {
   const { data: session } = useSession();
   const token = session?.user?.token;
   const name = session?.user?.name ?? "";
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useClipboard();
 
   function copyToken() {
     if (!token) return;
-    navigator.clipboard.writeText(token);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    copy(token);
   }
 
   return (
     <PageShell>
       <div className="flex min-h-screen flex-col">
         <header className="flex h-14 items-center justify-between border-b border-white/8 px-10">
-          <Link href="/" className="text-[14px] font-bold text-white tracking-tight">
-            pullrabbit
+          <Link href="/" className="transition-opacity hover:opacity-80">
+            <Image src="/pullrabbit/reclogo.png" alt="PullRabbit" width={110} height={26} className="h-[26px] w-auto" />
           </Link>
           <button
             type="button"

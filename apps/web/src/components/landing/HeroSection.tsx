@@ -5,7 +5,7 @@ export function HeroSection() {
     <section className="px-10 pb-0 pt-14">
       {/* announcement bar */}
       <div className="mb-8 flex items-center gap-3 text-[14px]">
-        <span className="bg-white px-1.5 py-0.5 text-[11px] font-bold text-black">
+        <span className="rounded bg-white px-2 py-0.5 text-[11px] font-bold text-black">
           New
         </span>
         <span className="text-[#777]">
