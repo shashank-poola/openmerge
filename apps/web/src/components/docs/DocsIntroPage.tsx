@@ -1,5 +1,3 @@
-export const metadata = { title: "Introduction — PullRabbit Docs" };
-
 const toc = [
   { id: "overview", label: "Overview" },
   { id: "key-capabilities", label: "Key capabilities" },
@@ -8,7 +6,7 @@ const toc = [
   { id: "configuration", label: "Configuration" },
 ];
 
-export default function DocsIntroPage() {
+export function DocsIntroPage() {
   return (
     <div className="flex">
       {/* main prose */}
@@ -42,7 +40,6 @@ export default function DocsIntroPage() {
             ["Multi-agent parallel review:", "Three specialized agents run simultaneously on every PR — no sequential bottleneck."],
             ["Inline diff comments:", "AI findings are posted as line-level review comments, not a separate report."],
             ["GitHub App integration:", "Installs in 30 seconds. Webhooks trigger reviews automatically on every PR."],
-            ["Unified dashboard:", "See every open PR and its review status across all your repositories."],
             ["Configurable rules:", "Ignore paths, adjust severity thresholds, and disable specific agents per repository."],
           ].map(([label, desc]) => (
             <li key={label as string} className="flex gap-2">
@@ -88,7 +85,7 @@ export default function DocsIntroPage() {
         <p className="mb-3 text-[#888]">Install the PullRabbit GitHub App in three steps:</p>
         <ol className="mb-4 space-y-2 text-[#888]">
           {[
-            "Sign in at pullrabbit.dev with your GitHub account.",
+            "Visit the GitHub Marketplace and install the PullRabbit GitHub App.",
             "Authorize PullRabbit and select the repositories to review.",
             "Open a pull request — PullRabbit will post a review automatically.",
           ].map((step, i) => (
@@ -102,7 +99,7 @@ export default function DocsIntroPage() {
           <p className="mb-1 text-[10px] font-bold uppercase text-[#555]">bash</p>
           <code className="text-white"># No CLI install required — install via GitHub Marketplace</code>
           <br />
-          <code className="text-[#81c995]">https://github.com/apps/pullrabbit</code>
+          <code className="text-[#81c995]">https://github.com/apps/pull-rabbit/installations/select_target</code>
         </div>
 
         <h2 id="configuration" className="mb-3 mt-8 text-[18px] font-bold text-white scroll-mt-16">

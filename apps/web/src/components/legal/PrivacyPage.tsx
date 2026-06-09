@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { PageShell } from "@/components/layout/PageShell";
 
-export const metadata = { title: "Privacy Policy — PullRabbit" };
-
 const sections = [
   {
     title: "1. Information We Collect",
@@ -46,7 +44,7 @@ const sections = [
   },
 ];
 
-export default function PrivacyPage() {
+export function PrivacyPage() {
   return (
     <PageShell>
       <header className="flex h-14 items-center justify-between border-b border-white/8 px-10 text-[13px]">

@@ -34,29 +34,28 @@ export function FeaturesGrid() {
         {features.map((feature, i) => (
           <div
             key={feature.name}
-            className={`flex items-stretch border-white/8 ${
-              i % 2 === 0 ? "md:border-r" : ""
-            } ${i < 2 ? "border-b" : ""}`}
+            className={`group flex items-stretch border-white/8 transition-colors duration-200
+              hover:bg-white/[0.015] ${i % 2 === 0 ? "md:border-r" : ""} ${i < 2 ? "border-b" : ""}`}
           >
-            {/* GIF — left column, fixed width */}
+            {/* GIF */}
             <div className="w-[160px] shrink-0 overflow-hidden border-r border-white/8">
               <Image
                 src={feature.gif}
                 alt={feature.name}
                 width={160}
                 height={180}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                 unoptimized
               />
             </div>
 
-            {/* Text — right column */}
+            {/* Text */}
             <div className="flex flex-1 flex-col justify-center px-7 py-7">
-              <p className="mb-1 text-[11px] text-[#555] select-none">[*]</p>
-              <h3 className="mb-2 text-[14px] font-bold text-white leading-snug">
+              <p className="mb-1 select-none text-[11px] text-[#555]">[*]</p>
+              <h3 className="mb-2 text-[14px] font-bold leading-snug text-white">
                 {feature.name}
               </h3>
-              <p className="text-[12px] leading-relaxed text-[#666]">
+              <p className="text-[12px] leading-relaxed text-[#666] transition-colors duration-200 group-hover:text-[#888]">
                 {feature.description}
               </p>
             </div>

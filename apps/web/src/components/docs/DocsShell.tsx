@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { PageShell } from "@/components/layout/PageShell";
 
 const nav = [
   {
@@ -34,13 +34,18 @@ const nav = [
   },
 ];
 
-export default function DocsLayout({ children }: { children: React.ReactNode }) {
+export function DocsShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#131010] font-mono text-white">
-      {/* top nav */}
       <header className="sticky top-0 z-20 flex h-12 items-center justify-between border-b border-white/8 bg-[#131010] px-5">
-        <Link href="/" className="text-[13px] font-bold text-white tracking-tight">
-          pullrabbit
+        <Link href="/" className="transition-opacity hover:opacity-80">
+          <Image
+            src="/pullrabbit/reclogo.png"
+            alt="PullRabbit"
+            width={110}
+            height={26}
+            className="h-[26px] w-auto"
+          />
         </Link>
         <div className="flex items-center gap-4 text-[12px] text-[#555]">
           <Link href="/docs" className="hover:text-white">Docs</Link>
@@ -55,7 +60,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
       </header>
 
       <div className="flex">
-        {/* sidebar */}
         <aside className="sticky top-12 h-[calc(100vh-3rem)] w-[220px] shrink-0 overflow-y-auto border-r border-white/8 px-4 py-5">
           <div className="mb-4 flex items-center gap-2 border border-white/8 px-3 py-2 text-[11px] text-[#444]">
             <span>Search ...</span>
@@ -86,7 +90,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           </nav>
         </aside>
 
-        {/* content */}
         <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>

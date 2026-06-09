@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const navItems = [
@@ -10,8 +11,18 @@ const navItems = [
 export function SiteHeader() {
   return (
     <header className="flex h-14 w-full items-center justify-between border-b border-white/8 px-10 text-[14px]">
-      <Link href="/" className="font-bold text-white tracking-tight">
-        pullrabbit
+      <Link
+        href="/"
+        className="transition-opacity duration-150 hover:opacity-80"
+      >
+        <Image
+          src="/pullrabbit/reclogo.png"
+          alt="PullRabbit"
+          width={120}
+          height={28}
+          className="h-7 w-auto"
+          priority
+        />
       </Link>
 
       <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
@@ -19,17 +30,31 @@ export function SiteHeader() {
           <Link
             key={item.label}
             href={item.href}
-            className="text-[#777] transition-colors hover:text-white"
+            className="relative text-[#777] transition-colors duration-150 hover:text-white
+              after:absolute after:bottom-[-2px] after:left-0 after:h-[1px] after:w-0
+              after:bg-white/50 after:transition-[width] after:duration-200 hover:after:w-full"
           >
             {item.label}
           </Link>
         ))}
+
         <Link
           href="/signin"
-          className="flex h-8 items-center rounded border border-white/20 px-4 text-[13px] text-white transition-colors hover:bg-white hover:text-black"
+          className="text-[13px] text-[#555] transition-colors duration-150 hover:text-white"
         >
           Sign in
         </Link>
+
+        <a
+          href="https://github.com/apps/pull-rabbit/installations/select_target"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex h-8 items-center gap-1.5 bg-white px-4 text-[12px] font-bold text-black
+            transition-all duration-150 hover:bg-[#e8e8e8] active:scale-[0.97]"
+        >
+          Install
+          <span className="transition-transform duration-150 group-hover:translate-x-0.5">→</span>
+        </a>
       </nav>
     </header>
   );

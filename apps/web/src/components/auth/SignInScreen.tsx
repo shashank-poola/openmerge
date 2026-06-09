@@ -3,16 +3,14 @@
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { PageShell } from "@/components/layout/PageShell";
-import { PullRabbitMark } from "@/components/landing/brand/PullRabbitMark";
 
 export function SignInScreen() {
   return (
     <PageShell>
       <div className="flex min-h-screen flex-col">
         <header className="flex h-14 items-center border-b border-white/8 px-10">
-          <Link href="/" className="flex items-center gap-2.5">
-            <PullRabbitMark color="light" />
-            <span className="text-[14px] font-bold text-white">pullrabbit</span>
+          <Link href="/" className="text-[14px] font-bold text-white tracking-tight">
+            pullrabbit
           </Link>
         </header>
 
@@ -28,7 +26,7 @@ export function SignInScreen() {
             <div className="space-y-3">
               <button
                 type="button"
-                onClick={() => signIn("github", { callbackUrl: "/setup/loading" })}
+                onClick={() => signIn("github", { callbackUrl: "/account" })}
                 className="flex h-12 w-full items-center justify-between bg-white px-5 text-[14px] font-bold text-black transition-colors hover:bg-[#e8e8e8]"
               >
                 <span className="flex items-center gap-3">
@@ -49,9 +47,9 @@ export function SignInScreen() {
 
             <p className="mt-8 text-[12px] leading-relaxed text-[#444]">
               By signing in you agree to our{" "}
-              <Link href="#" className="text-[#666] hover:text-white">Terms of Service</Link>
+              <Link href="/terms" className="text-[#666] hover:text-white">Terms of Service</Link>
               {" "}and{" "}
-              <Link href="#" className="text-[#666] hover:text-white">Privacy Policy</Link>.
+              <Link href="/privacy" className="text-[#666] hover:text-white">Privacy Policy</Link>.
             </p>
           </div>
         </div>
@@ -59,9 +57,9 @@ export function SignInScreen() {
         <footer className="border-t border-white/8 px-10 py-4 flex items-center justify-between text-[12px] text-[#444]">
           <span>©2026 PullRabbit Labs</span>
           <div className="flex gap-5">
-            <Link href="#" className="transition-colors hover:text-[#888]">Docs</Link>
-            <Link href="#" className="transition-colors hover:text-[#888]">GitHub</Link>
-            <Link href="#" className="transition-colors hover:text-[#888]">Privacy</Link>
+            <Link href="/docs" className="transition-colors hover:text-[#888]">Docs</Link>
+            <Link href="https://github.com/pullrabbit/pullrabbit" className="transition-colors hover:text-[#888]">GitHub</Link>
+            <Link href="/privacy" className="transition-colors hover:text-[#888]">Privacy</Link>
           </div>
         </footer>
       </div>

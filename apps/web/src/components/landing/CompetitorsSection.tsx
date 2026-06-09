@@ -41,15 +41,22 @@ export function CompetitorsSection() {
         How PullRabbit compares to other tools in the developer workflow.
       </p>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {competitors.map((c) => (
-          <div key={c.name} className="border border-white/8 px-7 py-6">
-            <p className="mb-5 text-[13px] font-bold text-[#555]">vs {c.name}</p>
+          <div
+            key={c.name}
+            className="group border border-white/8 px-7 py-6 transition-colors duration-200
+              hover:border-white/15 hover:bg-white/[0.02]"
+          >
+            <p className="mb-5 text-[12px] font-bold uppercase tracking-wider text-[#444]
+              transition-colors duration-150 group-hover:text-[#666]">
+              vs {c.name}
+            </p>
             <ul className="space-y-3">
               {c.points.map((point, i) => (
                 <li key={i} className="flex gap-3 text-[13px] leading-relaxed">
-                  <span className="shrink-0 text-[#444] select-none">—</span>
-                  <span className={i === 2 ? "text-white" : "text-[#777]"}>{point}</span>
+                  <span className="shrink-0 select-none text-[#333]">—</span>
+                  <span className={i === 2 ? "text-white" : "text-[#666]"}>{point}</span>
                 </li>
               ))}
             </ul>

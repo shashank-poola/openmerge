@@ -21,38 +21,24 @@ export const login = async (req: Request, res: Response) => {
             avatarUrl: user?.avatarUrl,
         });
 
-        const existingUser = await db.user.findUnique({
+        const myUser = await db.user.upsert({
             where: {
-                githubUserId: parsedUser.githubUserId,
+                githubLogin: parsedUser.githubLogin,
             },
-        });
-
-        let myUser;
-        if (existingUser) {
-            const updateData = {
+            create: {
+                githubUserId: parsedUser.githubUserId,
                 githubLogin: parsedUser.githubLogin,
                 email: parsedUser.email,
                 name: parsedUser.name,
                 avatarUrl: parsedUser.avatarUrl,
-            };
-
-            myUser = await db.user.update({
-                where: {
-                    githubUserId: parsedUser.githubUserId,
-                },
-                data: updateData,
-            });
-        } else {
-            myUser = await db.user.create({
-                data: {
-                    githubUserId: parsedUser.githubUserId,
-                    githubLogin: parsedUser.githubLogin,
-                    email: parsedUser.email,
-                    name: parsedUser.name,
-                    avatarUrl: parsedUser.avatarUrl,
-                },
-            });
-        }
+            },
+            update: {
+                githubUserId: parsedUser.githubUserId,
+                email: parsedUser.email,
+                name: parsedUser.name,
+                avatarUrl: parsedUser.avatarUrl,
+            },
+        });
 
         const jwtPayload = {
             name: myUser.name,

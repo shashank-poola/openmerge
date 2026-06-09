@@ -24,16 +24,24 @@ export function FAQSection() {
           <div key={faq.question}>
             <button
               onClick={() => setOpen(open === i ? null : i)}
-              className="flex w-full items-center justify-between py-5 text-left text-[14px] text-white transition-colors hover:text-white/70"
+              className="flex w-full items-center justify-between py-5 text-left text-[14px]
+                text-white transition-colors duration-150 hover:text-white/70"
             >
               <span>{faq.question}</span>
-              <span className="ml-4 shrink-0 text-[#444] text-[18px] leading-none">
-                {open === i ? "−" : "+"}
+              <span
+                className={`ml-4 shrink-0 text-[18px] leading-none text-[#444]
+                  transition-transform duration-200 ${open === i ? "rotate-45" : "rotate-0"}`}
+              >
+                +
               </span>
             </button>
-            {open === i && (
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                open === i ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+              }`}
+            >
               <p className="pb-5 text-[13px] leading-relaxed text-[#777]">{faq.answer}</p>
-            )}
+            </div>
           </div>
         ))}
       </div>

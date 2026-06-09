@@ -616,7 +616,7 @@ export function dmxBloomHaloSpreadClass(halo: number | undefined): "dmx-bloom-ha
 }
 
 /**
- * Bloom level and dot class for one cell. `curveOpacity` is the loader’s logical opacity **before**
+ * Bloom level and dot class for one cell. `curveOpacity` is the loader's logical opacity **before**
  * `remapOpacityToTriplet` (same as `bloom` uses today).
  */
 export function dmxDotBloomParts(

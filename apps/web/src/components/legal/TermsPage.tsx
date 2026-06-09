@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { PageShell } from "@/components/layout/PageShell";
 
-export const metadata = { title: "Terms of Service — PullRabbit" };
-
 const sections = [
   {
     title: "1. Acceptance of Terms",
@@ -42,7 +40,7 @@ const sections = [
   },
 ];
 
-export default function TermsPage() {
+export function TermsPage() {
   return (
     <PageShell>
       <header className="flex h-14 items-center justify-between border-b border-white/8 px-10 text-[13px]">
