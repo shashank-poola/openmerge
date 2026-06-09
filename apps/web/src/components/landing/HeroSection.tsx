@@ -11,7 +11,7 @@ export function HeroSection() {
         <span className="text-[#777]">
           Multi-agent parallel PR reviews now available.{" "}
           <a
-            href="#features"
+            href="features"
             className="relative text-white after:absolute after:bottom-[-1px] after:left-0
               after:h-[1px] after:w-0 after:bg-white after:transition-[width] after:duration-200
               hover:after:w-full"

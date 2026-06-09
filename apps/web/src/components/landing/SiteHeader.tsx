@@ -5,7 +5,7 @@ const navItems = [
   { label: "Features", href: "#features" },
   { label: "PullRabbit Vs", href: "#competitors" },
   { label: "Docs", href: "/docs" },
-  { label: "GitHub", href: "https://github.com/pullrabbit/pullrabbit" },
+  { label: "GitHub", href: "https://github.com/shashank-poola/pullrabbit/" },
 ];
 
 export function SiteHeader() {

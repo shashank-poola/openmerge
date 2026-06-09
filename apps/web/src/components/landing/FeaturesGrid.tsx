@@ -30,6 +30,12 @@ const features = [
 export function FeaturesGrid() {
   return (
     <section id="features" className="border-t border-white/8">
+      <div className="border-b border-white/8 px-10 py-10">
+        <h2 className="mb-2 text-[18px] font-bold text-white">Built for serious teams</h2>
+        <p className="text-[13px] text-[#555]">
+          Four core capabilities that make every pull request review faster, deeper, and automatic.
+        </p>
+      </div>
       <div className="grid grid-cols-1 divide-y divide-white/8 md:grid-cols-2 md:divide-y-0">
         {features.map((feature, i) => (
           <div
