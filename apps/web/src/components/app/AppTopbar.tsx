@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01Icon, Logout01Icon } from "@hugeicons/core-free-icons";
 import { signOut, useSession } from "next-auth/react";
-import { PullRabbitLogo } from "@/components/brand/PullRabbitLogo";
 import { demoUser } from "@/src/lib/demo-data";
 
 type AppTopbarProps = {
@@ -15,22 +15,25 @@ export function AppTopbar({ showBack = false }: AppTopbarProps) {
   const login = session?.user?.name ?? demoUser.login;
 
   return (
-    <header className="absolute left-0 top-0 z-10 flex h-24 w-full items-center justify-center px-10 text-white">
+    <header className="absolute left-0 top-0 z-10 flex h-20 w-full items-center justify-center px-10 font-mono text-white">
       {showBack ? (
-        <Link href="/setup/organizations" className="absolute left-11 inline-flex items-center gap-2 text-[16px] font-bold text-white/85 hover:text-white">
-          <ArrowLeft className="h-4 w-4" />
+        <Link
+          href="/setup/organizations"
+          className="absolute left-10 inline-flex items-center gap-2 text-[13px] text-[#777] hover:text-white"
+        >
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={15} strokeWidth={1.5} />
           Back
         </Link>
       ) : null}
-      <Link href="/" aria-label="PullRabbit home">
-        <PullRabbitLogo className="text-white" markClassName="border-white/30" />
+      <Link href="/" className="text-[14px] font-bold text-white tracking-tight" aria-label="PullRabbit home">
+        pullrabbit
       </Link>
       <button
         type="button"
         onClick={() => signOut({ callbackUrl: "/" })}
-        className="absolute right-11 inline-flex items-center gap-2 text-[16px] font-bold text-white/85 hover:text-white"
+        className="absolute right-10 inline-flex items-center gap-2 text-[13px] text-[#777] hover:text-white"
       >
-        <LogOut className="h-4 w-4" />
+        <HugeiconsIcon icon={Logout01Icon} size={15} strokeWidth={1.5} />
         Log out {login}
       </button>
     </header>

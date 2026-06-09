@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { InstallTabs } from "./InstallTabs";
 
 export function HeroSection() {
@@ -29,16 +28,9 @@ export function HeroSection() {
 
       <InstallTabs />
 
-      <div className="mt-12 border-t border-x-0 border-white/8 overflow-hidden">
-        <Image
-          src="/blocks/5126d0dd14d2d73718fca5687d21edc3.gif"
-          alt="PullRabbit AI review in action"
-          width={900}
-          height={500}
-          className="w-full"
-          unoptimized
-          priority
-        />
+      {/* video placeholder — replace src with your video when ready */}
+      <div className="mt-12 border border-dashed border-white/10 min-h-[380px] flex items-center justify-center">
+        <span className="text-[12px] text-[#2a2828] select-none">[ demo video ]</span>
       </div>
     </section>
   );

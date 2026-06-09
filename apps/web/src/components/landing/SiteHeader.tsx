@@ -1,20 +1,17 @@
 import Link from "next/link";
-import { PullRabbitMark } from "@/components/landing/brand/PullRabbitMark";
 
 const navItems = [
-  { label: "GitHub [2.1K]", href: "https://github.com/pullrabbit/pullrabbit" },
-  { label: "Docs", href: "#" },
-  { label: "Changelog", href: "#" },
   { label: "Features", href: "#features" },
-  { label: "CLI", href: "#cli" },
+  { label: "PullRabbit Vs", href: "#competitors" },
+  { label: "Docs", href: "#" },
+  { label: "GitHub", href: "https://github.com/pullrabbit/pullrabbit" },
 ];
 
 export function SiteHeader() {
   return (
     <header className="flex h-14 w-full items-center justify-between border-b border-white/8 px-10 text-[14px]">
-      <Link href="/" aria-label="PullRabbit home" className="flex items-center gap-2.5">
-        <PullRabbitMark color="light" />
-        <span className="font-bold text-white tracking-tight">pullrabbit</span>
+      <Link href="/" className="font-bold text-white tracking-tight">
+        pullrabbit
       </Link>
 
       <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
