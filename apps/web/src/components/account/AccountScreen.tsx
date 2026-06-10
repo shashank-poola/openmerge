@@ -1,15 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
 import { PageShell } from "@/components/layout/PageShell";
 import { useClipboard } from "@/hooks/useClipboard";
 
+function signOut() {
+  localStorage.removeItem("pr_token");
+  window.location.href = "/";
+}
+
 export function AccountScreen() {
-  const { data: session } = useSession();
-  const token = session?.user?.token;
-  const name = session?.user?.name ?? "";
+  const [token, setToken] = useState<string | null>(null);
+  const name = "";
+
+  useEffect(() => {
+    setToken(localStorage.getItem("pr_token"));
+  }, []);
   const { copied, copy } = useClipboard();
 
   function copyToken() {
@@ -26,7 +34,7 @@ export function AccountScreen() {
           </Link>
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => signOut()}
             className="text-[12px] text-[#555] transition-colors hover:text-white"
           >
             Sign out
