@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="apps/web/public/pullrabbit/logobg.png" alt="PullRabbit" width="120" />
+  <img src="apps/web/public/pullrabbit/logo.png" alt="PullRabbit" width="120" />
 </p>
 
 <p align="center">
