@@ -110,7 +110,6 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
         });
     }
 
-    // Post loading comment so the PR author knows review is in progress
     let loadingCommentId: bigint | null = null;
     try {
         const octokit = createInstallationOctokit(installationId);
@@ -125,9 +124,7 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
             where: { id: session.id },
             data: { githubLoadingCommentId: loadingCommentId },
         });
-    } catch {
-        // loading comment is best-effort
-    }
+    } catch { /* */ }
 
     await reviewQueue.add('review', {
         reviewSessionId: session.id,

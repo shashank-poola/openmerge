@@ -1,27 +1,5 @@
 import type { AgentInput } from "../agent/agent.types";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RESEARCH BASIS FOR CHANGES
-// Sources: Augment Code (2026-03), Josh English / Medium (2026-02),
-//          CodeRabbit precision/recall benchmark analysis (2026-03),
-//          Grounded AI for Code Review - arxiv 2510.10290
-//
-// KEY CHANGES FROM PRIOR VERSION:
-// 1. Evidence grounding requirement — every comment must cite the exact diff
-//    hunk or line it is based on. Prevents confident hallucination.
-// 2. Internal reasoning chain (scratchpad) before JSON output — forces the
-//    model to verify each issue is real before committing it.
-// 3. False positive cost framing — makes the cost of noise concrete, not just
-//    a stylistic preference.
-// 4. Inter-agent deduplication — code review agent is told security and
-//    performance are handled by separate specialist agents; it should skip
-//    those categories to avoid redundant, contradictory comments.
-// 5. Diff-scope gate — agents must ask "was this introduced by this PR?" and
-//    not flag pre-existing issues as regressions.
-// 6. Confidence calibration — uncertain issues are flagged as questions, not
-//    assertions, so the author can clarify rather than argue.
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const CODE_REVIEW_SYSTEM = `You are a senior staff engineer conducting a pull request review. Your job is to catch real bugs, correctness problems, and reliability risks introduced by this specific diff — nothing else.
 
 ## Your single most important constraint: evidence grounding

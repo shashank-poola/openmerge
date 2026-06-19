@@ -7,8 +7,6 @@ const PYTHON_EXTS = [".py"];
 const SUPPORTED_EXTS = [...TS_JS_EXTS, ...PYTHON_EXTS];
 const MAX_SOURCE_CHARS = 4_000;
 
-// ── TS/JS local path resolution ───────────────────────────────────────────────
-
 const resolveLocalPathTS = async (
     importPath: string,
     fromFile: string,
@@ -27,17 +25,14 @@ const resolveLocalPathTS = async (
         try {
             await access(candidate);
             return candidate;
-        } catch { /* try next */ }
+        } catch { /* */ }
     }
 
     return null;
 };
 
-// ── Python local path resolution ──────────────────────────────────────────────
-// Handles relative imports: `from .module import x`, `from ..utils import y`
-
 const resolveLocalPathPython = async (
-    importPath: string, // e.g. ".module" or "..utils.helper"
+    importPath: string,
     fromFile: string,
     repoRoot: string
 ): Promise<string | null> => {
@@ -47,12 +42,10 @@ const resolveLocalPathPython = async (
     let rest = importPath;
     while (rest.startsWith(".")) { dotCount++; rest = rest.slice(1); }
 
-    // Walk up dotCount-1 directories (1 dot = current package, 2 dots = parent, etc.)
     let baseDir = fromDir;
     for (let i = 1; i < dotCount; i++) baseDir = dirname(baseDir);
 
     if (!rest) {
-        // `from . import x` — package __init__.py
         const candidate = join(baseDir, "__init__.py");
         try { await access(candidate); return candidate; } catch { return null; }
     }
@@ -68,13 +61,10 @@ const resolveLocalPathPython = async (
     return null;
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 const isLocalPythonImport = (source: string): boolean => source.startsWith(".");
 
 const extractPythonRelativeImports = (content: string): string[] => {
     const sources: string[] = [];
-    // from .x import y  /  from ..x import y
     const pattern = /^from\s+(\.+[\w.]*)\s+import\s+/gm;
     let m: RegExpExecArray | null;
     while ((m = pattern.exec(content)) !== null) {
@@ -82,8 +72,6 @@ const extractPythonRelativeImports = (content: string): string[] => {
     }
     return sources;
 };
-
-// ── Entry point ───────────────────────────────────────────────────────────────
 
 export const resolveImports = async (params: {
     changedFiles: string[];
@@ -102,7 +90,6 @@ export const resolveImports = async (params: {
                     const content = await readFile(absPath, "utf-8");
 
                     if (PYTHON_EXTS.includes(ext)) {
-                        // Python: resolve relative imports only
                         const importSources = extractPythonRelativeImports(content);
 
                         for (const imp of importSources) {
@@ -129,10 +116,9 @@ export const resolveImports = async (params: {
                                     sourceCode: sourceCode.slice(0, MAX_SOURCE_CHARS),
                                     usedInFile: filePath,
                                 });
-                            } catch { /* unreadable */ }
+                            } catch { /* */ }
                         }
                     } else {
-                        // TS/JS: resolve relative imports
                         const importPattern = /^import\s+[\s\S]*?\s+from\s+['"]([^'"]+)['"]/gm;
                         let match: RegExpExecArray | null;
 
@@ -162,10 +148,10 @@ export const resolveImports = async (params: {
                                     sourceCode: sourceCode.slice(0, MAX_SOURCE_CHARS),
                                     usedInFile: filePath,
                                 });
-                            } catch { /* unreadable */ }
+                            } catch { /* */ }
                         }
                     }
-                } catch { /* changed file deleted in PR */ }
+                } catch { /* */ }
             })
     );
 

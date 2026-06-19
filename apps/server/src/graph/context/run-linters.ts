@@ -30,8 +30,6 @@ type RuffMessage = {
     end_location: { row: number; column: number };
 };
 
-// ── ESLint ────────────────────────────────────────────────────────────────────
-
 const runESLint = async (
     files: string[],
     repoLocalPath: string
@@ -64,8 +62,6 @@ const runESLint = async (
     return issues;
 };
 
-// ── Ruff (Python) ─────────────────────────────────────────────────────────────
-
 const runRuff = async (
     files: string[],
     repoLocalPath: string
@@ -95,8 +91,6 @@ const runRuff = async (
     return issues;
 };
 
-// ── Entry point ───────────────────────────────────────────────────────────────
-
 export const runLinters = async (params: {
     changedFiles: string[];
     repoLocalPath: string;
@@ -111,7 +105,6 @@ export const runLinters = async (params: {
 
     const issues: LinterIssue[] = [];
 
-    // ESLint for TS/JS
     if (tsJsFiles.length > 0) {
         try {
             const eslintIssues = await runESLint(tsJsFiles, params.repoLocalPath);
@@ -138,12 +131,11 @@ export const runLinters = async (params: {
                             });
                         }
                     }
-                } catch { /* malformed JSON from eslint — skip */ }
+                } catch { /* */ }
             }
         }
     }
 
-    // Ruff for Python (exit code 1 = issues found, stdout still has JSON)
     if (pythonFiles.length > 0) {
         try {
             const ruffIssues = await runRuff(pythonFiles, params.repoLocalPath);
@@ -165,9 +157,8 @@ export const runLinters = async (params: {
                             severity: "warning",
                         });
                     }
-                } catch { /* malformed JSON from ruff — skip */ }
+                } catch { /* */ }
             }
-            // ruff not installed or config error — skip silently
         }
     }
 

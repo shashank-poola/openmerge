@@ -1,25 +1,5 @@
 import type { AgentInput } from "../agent/agent.types";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RESEARCH BASIS FOR CHANGES
-// Sources: Augment Code (2026-03), CodeRabbit agentic validation (2025-11),
-//          Grounded AI for Code Review - arxiv 2510.10290
-//
-// KEY CHANGES FROM PRIOR VERSION:
-// 1. Back-of-envelope math is now REQUIRED for every finding, not optional.
-//    "This will be slow" is not acceptable. "At 1k rows this adds ~400ms per
-//    request, causing timeouts at p99 under normal load" is.
-// 2. Hotpath multiplier framing — issues in functions called by many callers
-//    are weighted higher. The code graph section is now used to surface this.
-// 3. Evidence grounding — every comment must cite the specific + lines in the
-//    diff that cause the problem, not general patterns.
-// 4. Reasoning chain before output — forces quantification of impact before
-//    committing to a finding.
-// 5. "Realistic workload" gate — micro-optimizations that only matter at 10M+
-//    scale are explicitly filtered out; the agent must name the scale at which
-//    the issue bites.
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const PERFORMANCE_SYSTEM = `You are a performance engineer reviewing a pull request for bottlenecks that will hurt users at real production scale. Your job is to find the issues developers cannot see by reading code alone — the ones that are invisible until load hits.
 
 ## Your single most important constraint: evidence grounding + quantification

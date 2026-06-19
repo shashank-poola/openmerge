@@ -16,15 +16,11 @@ const BUILTIN_CALLS = new Set([
     "instanceof", "await", "console", "Math", "JSON", "Object", "Array",
     "Promise", "Error", "parseInt", "parseFloat", "String", "Number", "Boolean",
     "setTimeout", "setInterval", "clearTimeout", "clearInterval",
-    // Python builtins
     "print", "len", "range", "enumerate", "zip", "map", "filter", "sorted",
     "list", "dict", "set", "tuple", "type", "isinstance", "hasattr", "getattr",
     "setattr", "super", "repr", "str", "int", "float", "bool", "open",
-    // Rust common
     "println", "eprintln", "panic", "vec", "Some", "None", "Ok", "Err",
 ]);
-
-// ── Function definition finders ───────────────────────────────────────────────
 
 const findFunctionDefsTS = (code: string): Array<{ name: string; startLine: number }> => {
     const defs: Array<{ name: string; startLine: number }> = [];
@@ -72,8 +68,6 @@ const findFunctionDefs = (
     return findFunctionDefsTS(code);
 };
 
-// ── Function body extractors ──────────────────────────────────────────────────
-
 const getFunctionBody = (lines: string[], startLine: number): string => {
     let depth = 0;
     let started = false;
@@ -92,7 +86,6 @@ const getFunctionBody = (lines: string[], startLine: number): string => {
     return body.join("\n");
 };
 
-// Python uses indentation — collect lines until indent returns to base level
 const getPythonFunctionBody = (lines: string[], startLine: number): string => {
     const body: string[] = [lines[startLine - 1] ?? ""];
     const defLine = lines[startLine - 1] ?? "";
@@ -115,8 +108,6 @@ const getFunctionBodyForExt = (lines: string[], startLine: number, ext: string):
     return getFunctionBody(lines, startLine);
 };
 
-// ── Call extractor (works for TS/JS/Python/Rust) ─────────────────────────────
-
 const extractCalls = (body: string): string[] => {
     const calls = new Set<string>();
     const re = /\b([a-zA-Z_$][\w$]*)\s*\(/g;
@@ -128,8 +119,6 @@ const extractCalls = (body: string): string[] => {
     return [...calls];
 };
 
-// ── Directory walker ──────────────────────────────────────────────────────────
-
 const walkDir = async (dir: string, acc: string[] = []): Promise<string[]> => {
     try {
         const entries = await readdir(dir, { withFileTypes: true });
@@ -139,11 +128,9 @@ const walkDir = async (dir: string, acc: string[] = []): Promise<string[]> => {
             if (e.isDirectory()) await walkDir(full, acc);
             else if (SUPPORTED_EXTS.has(extname(e.name))) acc.push(full);
         }
-    } catch { /* unreadable dir */ }
+    } catch { /* */ }
     return acc;
 };
-
-// ── Entry point ───────────────────────────────────────────────────────────────
 
 export const buildCodeGraph = async (params: {
     changedFiles: string[];
@@ -174,7 +161,7 @@ export const buildCodeGraph = async (params: {
                         callerIndex.set(calledFn, existing);
                     }
                 }
-            } catch { /* skip unreadable */ }
+            } catch { /* */ }
         })
     );
 
@@ -199,7 +186,7 @@ export const buildCodeGraph = async (params: {
                 const calledBy = (callerIndex.get(def.name) ?? []).slice(0, 15);
                 graph.push({ filePath, functionName: def.name, calls, calledBy });
             }
-        } catch { /* file deleted in PR */ }
+        } catch { /* */ }
     }
 
     return graph;

@@ -1,28 +1,5 @@
 import type { AgentInput } from "../agent/agent.types";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RESEARCH BASIS FOR CHANGES
-// Sources: Augment Code context engine (2026-03), CodeRabbit slopsquatting /
-//          hallucinated dependency post (2025-11), OWASP ASVS v4,
-//          Grounded AI for Code Review - arxiv 2510.10290
-//
-// KEY CHANGES FROM PRIOR VERSION:
-// 1. Concrete exploit scenario requirement — every CRITICAL/HIGH comment must
-//    describe a specific attack: "attacker sends X to endpoint Y, server does Z,
-//    result is W." Vague "this could be vulnerable" comments are banned.
-// 2. Evidence grounding — every comment must cite the specific + lines in the
-//    diff that introduce the vulnerability, not general patterns.
-// 3. Reasoning chain before output — forces the attacker-perspective walkthrough
-//    before committing to a finding.
-// 4. Introduced vs. pre-existing gate — if the vulnerability existed before and
-//    this PR didn't change the relevant code, skip it. Flag regressions only.
-// 5. Trust boundary analysis — the agent must identify whether the exploiting
-//    actor is authenticated or unauthenticated, which determines real severity.
-// 6. Hallucination guard for dependencies — if a dep appears to be invented or
-//    unrecognized, flag it as a potential slopsquatting risk rather than silently
-//    treating it as known-safe.
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const SECURITY_SYSTEM = `You are a senior application security engineer reviewing a pull request for exploitable vulnerabilities. You think like an attacker — you look for code paths that can be exploited right now, not theoretical future risks.
 
 ## Your single most important constraint: evidence grounding + concrete exploit

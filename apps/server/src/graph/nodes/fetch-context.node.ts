@@ -25,7 +25,6 @@ export const fetchContext = async (
     try {
         const octokit = createInstallationOctokit(state.githubInstallationId);
 
-        // ── Step 1: base PR data from GitHub API ──────────────────────────────
         const [prRes, diffRes, filesRes] = await Promise.all([
             octokit.rest.pulls.get({
                 owner: state.owner,
@@ -50,7 +49,6 @@ export const fetchContext = async (
         const diff = (diffRes.data as unknown as string) ?? null;
         const prTitle = prRes.data.title ?? null;
 
-        // ── Step 2: clone repo at head SHA ────────────────────────────────────
         let repoLocalPath: string | null = null;
         try {
             const cloneResult = await cloneRepo({
@@ -64,7 +62,6 @@ export const fetchContext = async (
             console.error("fetchContext: clone failed, continuing without local analysis:", cloneErr);
         }
 
-        // ── Step 3: 5 context helpers in parallel (all fail-safe) ─────────────
         const [
             astSummariesResult,
             codeGraphResult,

@@ -62,7 +62,5 @@ export const cloneRepo = async (params: {
 export const cleanupRepo = async (localPath: string): Promise<void> => {
     try {
         await rm(localPath, { recursive: true, force: true });
-    } catch {
-        // ignore cleanup errors — OS will reclaim on restart
-    }
+    } catch { /* */ }
 };

@@ -14,8 +14,6 @@ const getLanguage = (ext: string): string => {
     return "unknown";
 };
 
-// ── TypeScript / JavaScript 
-
 const extractFunctions = (lines: string[]): ASTSummary["functions"] => {
     const functions: ASTSummary["functions"] = [];
 
@@ -134,8 +132,6 @@ const extractImports = (lines: string[]): ASTSummary["imports"] => {
     return imports;
 };
 
-// ── Python 
-
 const extractFunctionsPython = (lines: string[]): ASTSummary["functions"] => {
     const functions: ASTSummary["functions"] = [];
 
@@ -202,7 +198,6 @@ const extractImportsPython = (lines: string[]): ASTSummary["imports"] => {
         const t = line.trim();
         if (t.startsWith("#")) return;
 
-        // from x.y import a, b  /  from .x import a
         const fromMatch = t.match(/^from\s+([\w.]+)\s+import\s+(.+)/);
         if (fromMatch?.[1] && fromMatch[2]) {
             const specifiers = fromMatch[2]
@@ -215,7 +210,6 @@ const extractImportsPython = (lines: string[]): ASTSummary["imports"] => {
             return;
         }
 
-        // import x, y
         const importMatch = t.match(/^import\s+(.+)/);
         if (importMatch?.[1]) {
             const specifiers = importMatch[1]
@@ -228,8 +222,6 @@ const extractImportsPython = (lines: string[]): ASTSummary["imports"] => {
 
     return imports;
 };
-
-// ── Rust ──────────────────────────────────────────────────────────────────────
 
 const extractFunctionsRust = (lines: string[]): ASTSummary["functions"] => {
     const functions: ASTSummary["functions"] = [];
@@ -261,7 +253,6 @@ const extractClassesRust = (lines: string[]): ASTSummary["classes"] => {
         const t = line.trimStart();
         if (t.startsWith("//")) return;
 
-        // struct / enum / trait declarations
         const structMatch = t.match(/^(?:pub(?:\([^)]*\))?\s+)?(?:struct|enum|trait)\s+(\w+)/);
         if (structMatch?.[1]) {
             currentClass = {
@@ -274,7 +265,6 @@ const extractClassesRust = (lines: string[]): ASTSummary["classes"] => {
             braceDepth = 0;
         }
 
-        // impl blocks — associate methods with the impl type
         if (!structMatch) {
             const implMatch = t.match(/^impl(?:<[^>]*>)?\s+(?:\w+\s+for\s+)?(\w+)/);
             if (implMatch?.[1]) {
@@ -314,8 +304,6 @@ const extractImportsRust = (lines: string[]): ASTSummary["imports"] => {
         const t = line.trim();
         if (t.startsWith("//")) return;
 
-        // use std::collections::HashMap;
-        // use crate::foo::{Bar, Baz};
         const useMatch = t.match(/^use\s+([\w:]+)(?:::\{([^}]+)\})?;/);
         if (useMatch?.[1]) {
             const source = useMatch[1];
@@ -332,8 +320,6 @@ const extractImportsRust = (lines: string[]): ASTSummary["imports"] => {
 
     return imports;
 };
-
-// ── Entry point ───────────────────────────────────────────────────────────────
 
 export const buildAST = async (params: {
     changedFiles: string[];
@@ -377,9 +363,7 @@ export const buildAST = async (params: {
                         classes,
                         imports,
                     });
-                } catch {
-                    // file deleted in this PR or unreadable — skip
-                }
+                } catch { /* */ }
             })
     );
 
