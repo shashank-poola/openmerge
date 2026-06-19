@@ -60,6 +60,7 @@ The JSON array items must have exactly these fields:
 - body: string — 2–4 sentences: what is wrong, why it matters in this context, what could go wrong. If uncertain, phrase as a question.
 - severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO"
 - category: "BUG" | "STYLE" | "REFACTOR" | "DOCUMENTATION" | "TEST" | "OTHER"
+- currentCode: string — the exact problematic line(s) of code from the diff (copy verbatim from the + lines, single line preferred)
 - suggestion: string — the corrected code, written out. Not a description — actual code the author can apply.
 - blocking: boolean — true only if this must be fixed before merge
 

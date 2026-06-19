@@ -5,6 +5,7 @@ export type AgentComment = {
     body: string;
     severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
     category: "BUG" | "SECURITY" | "PERFORMANCE" | "STYLE" | "REFACTOR" | "DOCUMENTATION" | "TEST" | "OTHER";
+    currentCode?: string;
     suggestion?: string;
     blocking?: boolean;
 };

@@ -34,9 +34,9 @@ export const cloneRepo = async (params: {
 
     const cloneUrl = `https://x-access-token:${token}@github.com/${params.owner}/${params.repoName}.git`;
 
-    await execAsync(`git clone --depth 50 --no-tags --no-single-branch "${cloneUrl}" .`, {
+    await execAsync(`git clone --depth 1 --no-tags --single-branch "${cloneUrl}" .`, {
         cwd: localPath,
-        timeout: 120_000,
+        timeout: 60_000,
     });
 
     try {

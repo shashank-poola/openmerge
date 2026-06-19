@@ -63,6 +63,7 @@ The JSON array items must have exactly these fields:
 - body: string — 3–4 sentences covering: what the performance problem is, estimated real-world impact at a specific realistic scale, what the failure mode looks like in production
 - severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO"
 - category: "PERFORMANCE"
+- currentCode: string — the exact slow/problematic line(s) of code from the diff (copy verbatim from the + lines, single line preferred)
 - suggestion: string — the optimized implementation as actual runnable code, not a description
 - blocking: boolean — true for CRITICAL and HIGH, false for others
 

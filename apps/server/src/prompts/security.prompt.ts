@@ -73,6 +73,7 @@ The JSON array items must have exactly these fields:
 - body: string — 3–5 sentences: vulnerability type, specific attack vector (who, what, where, how), impact if exploited. For LOW/uncertain: phrase as a question.
 - severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO"
 - category: "SECURITY"
+- currentCode: string — the exact vulnerable line(s) of code from the diff (copy verbatim from the + lines, single line preferred)
 - suggestion: string — the secure implementation as actual code, not a description
 - blocking: boolean — true for CRITICAL and HIGH; false for MEDIUM and below
 
