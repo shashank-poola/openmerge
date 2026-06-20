@@ -64,6 +64,19 @@ const buildSummaryLine = (fileCount: number, comments: AgentComment[]): string =
     return `Reviewed **${files}** · **${plural(comments.length, "issue")}**${blockingPart}`;
 };
 
+const SEVERITY_ORDER: AgentComment["severity"][] = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
+
+const buildDescription = (comments: AgentComment[]): string => {
+    if (comments.length === 0) return "";
+    const sorted = [...comments].sort(
+        (a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
+    );
+    return sorted
+        .slice(0, 2)
+        .map((c) => clip(firstSentence(c.body), 110))
+        .join(". ") + ".";
+};
+
 const buildSectionIntro = (label: string, items: AgentComment[]): string => {
     const blocking = countBlocking(items);
     const blockingNote = blocking > 0 ? `, **${plural(blocking, "blocking")}**` : "";
@@ -72,19 +85,16 @@ const buildSectionIntro = (label: string, items: AgentComment[]): string => {
 };
 
 const renderItem = (c: AgentComment): string[] => {
-    const file = c.filePath.split("/").pop() ?? c.filePath;
     const blockingBadge = c.blocking ? " · **blocking**" : "";
     const body = clip(firstSentence(c.body), 100);
 
-    const lines = [`- **\`${file}:${c.line}\`**${blockingBadge} — ${body}.`];
+    const lines = [`- \`${c.filePath}:${c.line}\`${blockingBadge} - ${body}.`];
     if (c.currentCode) lines.push(`  - **Current code:** \`${c.currentCode.trim()}\``);
     if (c.suggestion)  lines.push(`  - **Fix:** \`${c.suggestion.trim().replace(/\n/g, " ").slice(0, 200)}\``);
     return lines;
 };
 
 const renderSeverityGrouped = (items: AgentComment[]): string[] => {
-    const severityOrder: AgentComment["severity"][] = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
-
     const grouped = new Map<AgentComment["severity"], AgentComment[]>();
     for (const c of items) {
         const bucket = grouped.get(c.severity) ?? [];
@@ -93,7 +103,7 @@ const renderSeverityGrouped = (items: AgentComment[]): string[] => {
     }
 
     const lines: string[] = [];
-    for (const sev of severityOrder) {
+    for (const sev of SEVERITY_ORDER) {
         const group = grouped.get(sev);
         if (!group?.length) continue;
 
@@ -127,9 +137,12 @@ const buildComment = (state: PRReviewStateType, comments: AgentComment[], durati
             ? "⚠️ **Review complete** — non-blocking suggestions noted."
             : "✅ **Looks good to merge!**";
 
+    const description = buildDescription(comments);
+
     const lines: string[] = [
         `## Code Review${prTitleTag(state.prTitle)}`,
         "",
+        ...(description ? [description, ""] : []),
         buildSummaryLine(state.changedFiles.length, comments),
         "",
         verdict,
