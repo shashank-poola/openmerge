@@ -1,11 +1,13 @@
 import { readFile, access } from "fs/promises";
-import { join, dirname, extname, resolve } from "path";
+import { join, dirname, extname, resolve, relative } from "path";
 import type { ImportSource } from "../../types/review-context.type";
 
 const TS_JS_EXTS = [".ts", ".tsx", ".js", ".jsx", ".mts", ".cts"];
 const PYTHON_EXTS = [".py"];
 const SUPPORTED_EXTS = [...TS_JS_EXTS, ...PYTHON_EXTS];
 const MAX_SOURCE_CHARS = 4_000;
+
+const toPosixPath = (path: string) => path.replace(/\\/g, "/");
 
 const resolveLocalPathTS = async (
     importPath: string,
@@ -79,6 +81,7 @@ export const resolveImports = async (params: {
 }): Promise<ImportSource[]> => {
     const results: ImportSource[] = [];
     const seen = new Set<string>();
+    const changedFileSet = new Set(params.changedFiles.map(toPosixPath));
 
     await Promise.all(
         params.changedFiles
@@ -102,11 +105,8 @@ export const resolveImports = async (params: {
                             const resolvedAbsPath = await resolveLocalPathPython(imp, filePath, params.repoLocalPath);
                             if (!resolvedAbsPath) continue;
 
-                            if (params.changedFiles.some((f) => resolvedAbsPath.endsWith(f))) continue;
-
-                            const resolvedRelPath = resolvedAbsPath
-                                .replace(resolve(params.repoLocalPath) + "/", "")
-                                .replace(resolve(params.repoLocalPath) + "\\", "");
+                            const resolvedRelPath = toPosixPath(relative(resolve(params.repoLocalPath), resolvedAbsPath));
+                            if (changedFileSet.has(resolvedRelPath)) continue;
 
                             try {
                                 const sourceCode = await readFile(resolvedAbsPath, "utf-8");
@@ -134,11 +134,8 @@ export const resolveImports = async (params: {
                             const resolvedAbsPath = await resolveLocalPathTS(imp, filePath, params.repoLocalPath);
                             if (!resolvedAbsPath) continue;
 
-                            if (params.changedFiles.some((f) => resolvedAbsPath.endsWith(f))) continue;
-
-                            const resolvedRelPath = resolvedAbsPath
-                                .replace(resolve(params.repoLocalPath) + "/", "")
-                                .replace(resolve(params.repoLocalPath) + "\\", "");
+                            const resolvedRelPath = toPosixPath(relative(resolve(params.repoLocalPath), resolvedAbsPath));
+                            if (changedFileSet.has(resolvedRelPath)) continue;
 
                             try {
                                 const sourceCode = await readFile(resolvedAbsPath, "utf-8");

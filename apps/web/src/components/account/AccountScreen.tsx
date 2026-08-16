@@ -33,7 +33,7 @@ export function AccountScreen() {
       <div className="flex min-h-screen flex-col">
         <header className="flex h-14 items-center justify-between border-b border-white/8 px-10">
           <Link href="/" className="transition-opacity hover:opacity-80">
-            <Image src="/pullrabbit/reclogo.png" alt="PullRabbit" width={110} height={26} className="h-[26px] w-auto" />
+            <Image src="/pullrabbit/reclogo.png" alt="PullRabbit" width={110} height={26} className="h-6.5 w-auto" />
           </Link>
           <button
             type="button"
