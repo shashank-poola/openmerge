@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { PageShell } from "@/components/layout/PageShell";
@@ -12,12 +12,15 @@ function signOut() {
 }
 
 export function AccountScreen() {
-  const [token, setToken] = useState<string | null>(null);
+  const [token] = useState<string | null>(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return localStorage.getItem("pr_token");
+  });
   const name = "";
 
-  useEffect(() => {
-    setToken(localStorage.getItem("pr_token"));
-  }, []);
   const { copied, copy } = useClipboard();
 
   function copyToken() {

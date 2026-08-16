@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { INSTALLATIONS_CALLBACK_URL } from "@/routes/apiRoute";
@@ -17,10 +17,10 @@ export function SetupCallbackPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const installationId = searchParams.get("installation_id");
+  const hasInstallationId = useMemo(() => Boolean(installationId), [installationId]);
 
   useEffect(() => {
     if (!installationId) {
-      setState("no_id");
       return;
     }
 
@@ -57,17 +57,19 @@ export function SetupCallbackPage() {
       });
   }, [installationId, router]);
 
+  const viewState = hasInstallationId ? state : "no_id";
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#131010] font-mono">
       <div className="w-full max-w-sm space-y-6 px-6 text-center">
-        {state === "loading" && (
+        {viewState === "loading" && (
           <>
             <p className="text-[13px] text-[#555]">Activating PullRabbit on your repos…</p>
             <div className="mx-auto h-px w-16 animate-pulse bg-white/20" />
           </>
         )}
 
-        {state === "success" && (
+        {viewState === "success" && (
           <>
             <p className="text-[13px] text-white">Bot activated.</p>
             <p className="text-[12px] text-[#555]">
@@ -76,7 +78,7 @@ export function SetupCallbackPage() {
           </>
         )}
 
-        {state === "error" && (
+        {viewState === "error" && (
           <>
             <p className="text-[13px] text-red-400">Activation failed.</p>
             <p className="text-[12px] text-[#555]">{errorMsg}</p>
@@ -86,7 +88,7 @@ export function SetupCallbackPage() {
           </>
         )}
 
-        {state === "no_id" && (
+        {viewState === "no_id" && (
           <>
             <p className="text-[13px] text-[#555]">No installation ID found.</p>
             <Link href="/" className="inline-block text-[12px] text-[#444] transition-colors hover:text-white">

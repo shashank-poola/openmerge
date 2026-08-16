@@ -5,16 +5,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DotMatrixPhase } from "@/lib/dotmatrix-core";
 
 export function usePrefersReducedMotion(): boolean {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-    const update = () => {
-      setPrefersReducedMotion(query.matches);
+    const update = (event: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event.matches);
     };
 
-    update();
     query.addEventListener("change", update);
 
     return () => {
@@ -36,7 +40,6 @@ export function useCyclePhase({ active, cycleMsBase, speed = 1 }: UseCyclePhaseO
 
   useEffect(() => {
     if (!active) {
-      setPhase(0);
       return;
     }
 
@@ -56,7 +59,7 @@ export function useCyclePhase({ active, cycleMsBase, speed = 1 }: UseCyclePhaseO
     return () => cancelAnimationFrame(rafId);
   }, [active, cycleMsBase, speed]);
 
-  return phase;
+  return active ? phase : 0;
 }
 
 interface UseSteppedCycleOptions {
@@ -124,7 +127,6 @@ export function useSteppedCycle({
     if (!active) {
       activeRef.current = false;
       currentStepRef.current = idleStep;
-      setStep(idleStep);
       return;
     }
 
@@ -142,7 +144,6 @@ export function useSteppedCycle({
       }
     };
 
-    updateStep(performance.now());
     return subscribeFrame(updateStep);
   }, [active, cycleMs, idleStep, safeSteps, stepMs]);
 

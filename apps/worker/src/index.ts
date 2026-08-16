@@ -1,8 +1,25 @@
-import "dotenv/config";
+import { existsSync } from "fs";
+import dotenv from "dotenv";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
 import { Worker } from "bullmq";
 import { db } from "@repo/database";
 import { reviewGraph } from "../../server/src/graph/review.graph";
 import type { ReviewJobData } from "../../server/src/queue/review.queue";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPaths = [
+  resolve(__dirname, "../.env.local"),
+  resolve(__dirname, "../.env"),
+  resolve(__dirname, "../../../.env.local"),
+  resolve(__dirname, "../../../.env"),
+];
+
+for (const envPath of envPaths) {
+  if (existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+}
 
 const parseRedisUrl = (url: string) => {
     try {

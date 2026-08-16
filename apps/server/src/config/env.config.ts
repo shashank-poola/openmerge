@@ -1,10 +1,22 @@
+import { existsSync } from "fs";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import { z } from "zod";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+const envPaths = [
+  path.resolve(__dirname, "../../.env.local"),
+  path.resolve(__dirname, "../../.env"),
+  path.resolve(__dirname, "../../../.env.local"),
+  path.resolve(__dirname, "../../../.env"),
+];
+
+for (const envPath of envPaths) {
+  if (existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+}
 
 const envSchema = z.object({
     PORT: z.string().default("8000").transform(Number),

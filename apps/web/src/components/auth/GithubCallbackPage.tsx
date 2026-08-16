@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { GITHUB_EXCHANGE_URL } from "@/routes/apiRoute";
 
@@ -11,16 +12,15 @@ export function GithubCallbackPage() {
   const searchParams = useSearchParams();
   const called = useRef(false);
   const [error, setError] = useState("");
+  const code = searchParams.get("code");
+  const missingCodeError = useMemo(
+    () => (code ? "" : "No code received from GitHub."),
+    [code]
+  );
 
   useEffect(() => {
-    if (called.current) return;
+    if (!code || called.current) return;
     called.current = true;
-
-    const code = searchParams.get("code");
-    if (!code) {
-      setError("No code received from GitHub.");
-      return;
-    }
 
     fetch(GITHUB_EXCHANGE_URL, {
       method: "POST",
@@ -37,19 +37,18 @@ export function GithubCallbackPage() {
         }
       })
       .catch(() => setError("Could not reach server."));
-  }, [searchParams]);
+  }, [code]);
 
-  if (error) {
+  if (error || missingCodeError) {
+    const message = error || missingCodeError;
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#131010] font-mono">
         <div className="space-y-4 text-center">
-          <p className="text-[13px] text-red-400">{error}</p>
-          <a
-            href="/"
-            className="inline-block text-[12px] text-[#444] transition-colors hover:text-white"
-          >
+          <p className="text-[13px] text-red-400">{message}</p>
+          <Link href="/" className="inline-block text-[12px] text-[#444] transition-colors hover:text-white">
             ← return home
-          </a>
+          </Link>
         </div>
       </div>
     );
