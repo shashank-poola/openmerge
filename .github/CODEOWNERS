@@ -1,0 +1,15 @@
+# PullRabbit review ownership
+* @shashank-poola
+
+# CI and repository automation
+.github/ @shashank-poola
+
+# Database schema and migrations
+packages/database/ @shashank-poola
+
+# Backend and review pipeline
+apps/server/ @shashank-poola
+apps/worker/ @shashank-poola
+
+# Frontend
+apps/web/ @shashank-poola
