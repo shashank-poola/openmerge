@@ -24,11 +24,13 @@ export function parseRedisUrl(url: string): RedisConnection {
     throw new Error(`Unsupported Redis protocol: ${parsed.protocol}`);
   }
 
+  const decodedUsername = parsed.username ? decodeURIComponent(parsed.username) : "";
+
   return {
     host: parsed.hostname || DEFAULT_REDIS_CONNECTION.host,
     port: Number(parsed.port) || DEFAULT_REDIS_CONNECTION.port,
     ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
-    ...(parsed.username && parsed.username !== "default" ? { username: parsed.username } : {}),
+    ...(decodedUsername && decodedUsername !== "default" ? { username: decodedUsername } : {}),
     ...(parsed.protocol === "rediss:" ? { tls: {} } : {}),
   };
 }

@@ -9,6 +9,12 @@ describe("parseRedisUrl", () => {
       username: "reviewer",
       password: "p@ss",
     });
+    expect(parseRedisUrl("redis://review%2Fer:p%40ss@cache.internal:6380")).toEqual({
+      host: "cache.internal",
+      port: 6380,
+      username: "review/er",
+      password: "p@ss",
+    });
   });
 
   test("omits the default username and falls back to localhost defaults for invalid URLs", () => {
