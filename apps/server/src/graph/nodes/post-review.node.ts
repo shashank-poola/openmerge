@@ -36,6 +36,9 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
     session.jobId !== state.jobId ||
     session.workerId !== state.workerId
   ) {
+    if (state.repoLocalPath) {
+      await cleanupRepo(state.repoLocalPath);
+    }
     return { error: "REVIEW_OWNERSHIP_LOST" };
   }
 
@@ -104,7 +107,7 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
     return {};
   } catch (error) {
     console.error("postReview failed:", error);
-    return { error: String(error) };
+    return { error: error instanceof Error ? error.message : String(error) };
   } finally {
     if (state.repoLocalPath) {
       await cleanupRepo(state.repoLocalPath);

@@ -1,5 +1,3 @@
--- Add retry-aware review processing state.
-ALTER TYPE "ReviewStatus" ADD VALUE 'RETRYING';
 
 -- Add durable review identity and worker lifecycle fields.
 ALTER TABLE "ReviewSession"

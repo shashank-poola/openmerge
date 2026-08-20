@@ -19,26 +19,33 @@ const SEVERITY_EMOJI: Record<AgentComment["severity"], string> = {
   INFO: "ℹ️",
 };
 
-const SECTION_META: Record<AgentComment["category"], { emoji: string; label: string }> = {
-  BUG: { emoji: "🔍", label: "Potential Issues" },
-  SECURITY: { emoji: "🔒", label: "Security Issues" },
-  PERFORMANCE: { emoji: "⚡", label: "Performance" },
-  REFACTOR: { emoji: "💡", label: "Code Suggestions" },
-  STYLE: { emoji: "💡", label: "Code Suggestions" },
-  DOCUMENTATION: { emoji: "📝", label: "Documentation" },
-  TEST: { emoji: "🧪", label: "Test Coverage" },
-  OTHER: { emoji: "💡", label: "Other" },
+const SECTION_META: Record<AgentComment["category"], { emoji: string; label: string; singular: string }> = {
+  BUG: { emoji: "🔍", label: "Potential Issues", singular: "potential issue" },
+  SECURITY: { emoji: "🔒", label: "Security Issues", singular: "security issue" },
+  PERFORMANCE: { emoji: "⚡", label: "Performance", singular: "performance issue" },
+  REFACTOR: { emoji: "💡", label: "Code Suggestions", singular: "code suggestion" },
+  STYLE: { emoji: "💡", label: "Code Suggestions", singular: "code suggestion" },
+  DOCUMENTATION: { emoji: "📝", label: "Documentation", singular: "documentation item" },
+  TEST: { emoji: "🧪", label: "Test Coverage", singular: "test coverage item" },
+  OTHER: { emoji: "💡", label: "Other", singular: "other item" },
 };
 
 const SEVERITY_GROUPED_LABELS = new Set(["Security Issues", "Performance"]);
 const SEVERITY_ORDER: AgentComment["severity"][] = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
 
-type SectionData = { emoji: string; label: string; items: AgentComment[] };
+type SectionData = { emoji: string; label: string; singular: string; items: AgentComment[] };
 
 const plural = (n: number, word: string) => `${n} ${word}${n !== 1 ? "s" : ""}`;
 const countBlocking = (items: AgentComment[]) => items.filter((comment) => comment.blocking).length;
 const clip = (text: string, max: number) => text.length > max ? `${text.slice(0, max - 3)}…` : text;
 const firstSentence = (text: string) => text.split(/\.\s+/)[0]?.trim() ?? text;
+const endWithPeriod = (text: string) => {
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  return /[.!?…]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+};
+const sanitizeInlineCode = (text: string, max: number) =>
+  clip(text.trim().replace(/\s+/g, " ").replace(/`/g, "'"), max);
 const prTitleTag = (title: string | null): string => {
   if (!title) return "";
   return ` — ${title.trim().split(/\s+/).slice(0, 5).join(" ")}`;
@@ -57,27 +64,29 @@ const buildDescription = (comments: AgentComment[]): string => {
   const sorted = [...comments].sort(
     (a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity),
   );
-  return `${sorted
+  return sorted
     .slice(0, 2)
-    .map((comment) => clip(firstSentence(comment.body), 110))
-    .join(". ")}.`;
+    .map((comment) => endWithPeriod(clip(firstSentence(comment.body), 110)))
+    .join(" ");
 };
 
-const buildSectionIntro = (label: string, items: AgentComment[]): string => {
+const buildSectionIntro = (singular: string, items: AgentComment[]): string => {
   const blocking = countBlocking(items);
   const blockingNote = blocking > 0 ? `, **${plural(blocking, "blocking")}**` : "";
-  const preview = clip(firstSentence(items[0]?.body ?? ""), 90);
-  return `Found **${plural(items.length, label.toLowerCase())}**${blockingNote}. ${preview}.`;
+  const preview = endWithPeriod(clip(firstSentence(items[0]?.body ?? ""), 90));
+  return `Found **${plural(items.length, singular)}**${blockingNote}. ${preview}`;
 };
 
 const renderItem = (comment: AgentComment): string[] => {
   const blockingBadge = comment.blocking ? " · **blocking**" : "";
-  const body = clip(firstSentence(comment.body), 100);
-  const lines = [`- \`${comment.filePath}:${comment.line}\`${blockingBadge} - ${body}.`];
+  const body = endWithPeriod(clip(firstSentence(comment.body), 100));
+  const lines = [`- \`${comment.filePath}:${comment.line}\`${blockingBadge} - ${body}`];
 
-  if (comment.currentCode) lines.push(`  - **Current code:** \`${comment.currentCode.trim()}\``);
+  if (comment.currentCode) {
+    lines.push(`  - **Current code:** \`${sanitizeInlineCode(comment.currentCode, 200)}\``);
+  }
   if (comment.suggestion) {
-    lines.push(`  - **Fix:** \`${comment.suggestion.trim().replace(/\n/g, " ").slice(0, 200)}\``);
+    lines.push(`  - **Fix:** \`${sanitizeInlineCode(comment.suggestion, 200)}\``);
   }
 
   return lines;
@@ -111,8 +120,8 @@ const buildSections = (comments: AgentComment[]): Map<string, SectionData> => {
     const items = comments.filter((comment) => comment.category === category);
     if (!items.length) continue;
 
-    const { emoji, label } = SECTION_META[category];
-    if (!sections.has(label)) sections.set(label, { emoji, label, items: [] });
+    const { emoji, label, singular } = SECTION_META[category];
+    if (!sections.has(label)) sections.set(label, { emoji, label, singular, items: [] });
     sections.get(label)?.items.push(...items);
   }
   return sections;
@@ -143,7 +152,7 @@ export const buildReviewComment = (
     "",
   ];
 
-  for (const [, { emoji, label, items }] of buildSections(comments)) {
+  for (const [, { emoji, label, singular, items }] of buildSections(comments)) {
     const blocking = countBlocking(items);
     const blockingTag = blocking > 0 ? ` · ${blocking} blocking` : "";
     const summary = `${emoji} ${label} &nbsp;·&nbsp; ${plural(items.length, "issue")}${blockingTag}`;
@@ -152,7 +161,7 @@ export const buildReviewComment = (
       "<details>",
       `<summary>${summary}</summary>`,
       "",
-      buildSectionIntro(label, items),
+      buildSectionIntro(singular, items),
       "",
     );
 

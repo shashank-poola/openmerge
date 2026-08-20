@@ -12,13 +12,7 @@ const DEFAULT_REDIS_CONNECTION: RedisConnection = {
 };
 
 export function parseRedisUrl(url: string): RedisConnection {
-  let parsed: URL;
-
-  try {
-    parsed = new URL(url);
-  } catch {
-    return DEFAULT_REDIS_CONNECTION;
-  }
+  const parsed = new URL(url);
 
   if (parsed.protocol !== "redis:" && parsed.protocol !== "rediss:") {
     throw new Error(`Unsupported Redis protocol: ${parsed.protocol}`);

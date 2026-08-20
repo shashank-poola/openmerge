@@ -44,6 +44,9 @@ const reviewSessionUpdateMock = mock<() => Promise<NonNullable<ReviewSessionLook
   reviewKey: "repo-1:17:head-sha",
   jobId: null,
 }));
+const reviewSessionUpdateManyMock = mock(async () => ({ count: 1 }));
+const loadingCommentCreateMock = mock(async () => ({ data: { id: 123 } }));
+const loadingCommentUpdateMock = mock(async () => undefined);
 const reviewQueueAddMock = mock(async () => undefined);
 
 mock.module("@octokit/webhooks", () => ({
@@ -65,15 +68,24 @@ beforeAll(async () => {
 beforeEach(() => {
   verifyMock.mockReset();
   verifyMock.mockResolvedValue(true);
-  recordDeliveryMock.mockClear();
-  updateDeliveryMock.mockClear();
+  recordDeliveryMock.mockReset();
+  recordDeliveryMock.mockResolvedValue(true);
+  updateDeliveryMock.mockReset();
+  updateDeliveryMock.mockResolvedValue(undefined);
   installationUpdateManyMock.mockClear();
   repoFindUniqueMock.mockClear();
   reviewSessionFindUniqueMock.mockReset();
   reviewSessionFindUniqueMock.mockResolvedValue(null);
   reviewSessionCreateMock.mockClear();
   reviewSessionUpdateMock.mockClear();
-  reviewQueueAddMock.mockClear();
+  reviewSessionUpdateManyMock.mockReset();
+  reviewSessionUpdateManyMock.mockResolvedValue({ count: 1 });
+  loadingCommentCreateMock.mockReset();
+  loadingCommentCreateMock.mockResolvedValue({ data: { id: 123 } });
+  loadingCommentUpdateMock.mockReset();
+  loadingCommentUpdateMock.mockResolvedValue(undefined);
+  reviewQueueAddMock.mockReset();
+  reviewQueueAddMock.mockResolvedValue(undefined);
 });
 
 describe("handleWebhook", () => {
@@ -139,6 +151,122 @@ describe("handleWebhook", () => {
     expect(res.body).toEqual({ success: true, duplicate: true });
     expect(installationHandlerMock).not.toHaveBeenCalled();
     expect(updateDeliveryMock).not.toHaveBeenCalled();
+  });
+
+  test("queues a new review with a deterministic attempt job ID", async () => {
+    repoFindUniqueMock.mockResolvedValue({
+      id: "repo-1",
+      owner: "octocat",
+      name: "hello-world",
+      isActive: true,
+      autoReviewEnabled: true,
+      installation: {
+        status: "ACTIVE",
+        githubInstallationId: 99n,
+      },
+    });
+
+    const deps = {
+      db: {
+        installation: { updateMany: installationUpdateManyMock },
+        repository: { findUnique: repoFindUniqueMock },
+        reviewSession: {
+          findUnique: reviewSessionFindUniqueMock,
+          create: reviewSessionCreateMock,
+          update: reviewSessionUpdateMock,
+          updateMany: reviewSessionUpdateManyMock,
+        },
+      },
+      reviewQueue: { add: reviewQueueAddMock },
+      createInstallationOctokit: () => ({
+        rest: {
+          issues: {
+            createComment: loadingCommentCreateMock,
+            updateComment: loadingCommentUpdateMock,
+          },
+        },
+      }),
+    } as unknown as NonNullable<Parameters<typeof handlePullRequestEvent>[1]>;
+
+    await handlePullRequestEvent({
+      action: "opened",
+      number: 17,
+      pull_request: {
+        head: { sha: "head-sha" },
+        base: { ref: "main" },
+      },
+      repository: { id: 123 },
+    }, deps);
+
+    expect(reviewQueueAddMock).toHaveBeenCalledWith(
+      "review",
+      expect.objectContaining({ reviewSessionId: "session-1" }),
+      { jobId: "review:session-1:attempt:1" },
+    );
+    expect(reviewSessionUpdateMock).toHaveBeenCalledWith({
+      where: { id: "session-1" },
+      data: { githubLoadingCommentId: 123n },
+    });
+  });
+
+  test("marks a session retrying when publishing the review job fails", async () => {
+    repoFindUniqueMock.mockResolvedValue({
+      id: "repo-1",
+      owner: "octocat",
+      name: "hello-world",
+      isActive: true,
+      autoReviewEnabled: true,
+      installation: {
+        status: "ACTIVE",
+        githubInstallationId: 99n,
+      },
+    });
+    reviewQueueAddMock.mockRejectedValueOnce(new Error("Redis unavailable"));
+
+    const deps = {
+      db: {
+        installation: { updateMany: installationUpdateManyMock },
+        repository: { findUnique: repoFindUniqueMock },
+        reviewSession: {
+          findUnique: reviewSessionFindUniqueMock,
+          create: reviewSessionCreateMock,
+          update: reviewSessionUpdateMock,
+          updateMany: reviewSessionUpdateManyMock,
+        },
+      },
+      reviewQueue: { add: reviewQueueAddMock },
+      createInstallationOctokit: () => ({
+        rest: {
+          issues: {
+            createComment: loadingCommentCreateMock,
+            updateComment: loadingCommentUpdateMock,
+          },
+        },
+      }),
+    } as unknown as NonNullable<Parameters<typeof handlePullRequestEvent>[1]>;
+
+    await expect(handlePullRequestEvent({
+      action: "synchronize",
+      number: 17,
+      pull_request: {
+        head: { sha: "head-sha" },
+        base: { ref: "main" },
+      },
+      repository: { id: 123 },
+    }, deps)).rejects.toThrow("Redis unavailable");
+
+    expect(reviewSessionUpdateManyMock).toHaveBeenCalledWith({
+      where: {
+        id: "session-1",
+        status: { in: ["QUEUED", "RETRYING"] },
+        jobId: null,
+      },
+      data: {
+        status: "RETRYING",
+        lastErrorCode: "QUEUE_PUBLISH_FAILED",
+        errorMessage: "Redis unavailable",
+      },
+    });
   });
 
   test("does not enqueue the same PR and SHA more than once", async () => {

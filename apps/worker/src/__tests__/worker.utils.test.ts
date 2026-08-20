@@ -17,13 +17,13 @@ describe("parseRedisUrl", () => {
     });
   });
 
-  test("omits the default username and falls back to localhost defaults for invalid URLs", () => {
+  test("omits the default username and rejects malformed URLs", () => {
     expect(parseRedisUrl("redis://default:secret@localhost:6379")).toEqual({
       host: "localhost",
       port: 6379,
       password: "secret",
     });
-    expect(parseRedisUrl("not a redis url")).toEqual({ host: "127.0.0.1", port: 6379 });
+    expect(() => parseRedisUrl("not a redis url")).toThrow();
   });
 
   test("enables TLS for rediss URLs and rejects unsupported schemes", () => {

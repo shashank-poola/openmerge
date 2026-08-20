@@ -4,9 +4,15 @@ import {
   reviewQueue,
   type ReviewJobData,
 } from "../../server/src/queue/review.queue";
-import { MAX_REVIEW_ATTEMPTS, REVIEW_STALE_AFTER_MS } from "./review.constants";
+import {
+  MAX_REVIEW_ATTEMPTS,
+  REVIEW_RECOVERY_INTERVAL_MS,
+  REVIEW_STALE_AFTER_MS,
+} from "./review.constants";
 
-type RecoveryDb = Pick<typeof db, "reviewSession">;
+const WEBHOOK_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+type RecoveryDb = Pick<typeof db, "reviewSession" | "webhookDelivery">;
 type RecoveryQueue = Pick<typeof reviewQueue, "add" | "getJob">;
 
 type RecoveryDeps = {
@@ -19,7 +25,20 @@ const defaultDeps: RecoveryDeps = { db, reviewQueue };
 export async function recoverReviewSessions(
   deps: RecoveryDeps = defaultDeps,
 ): Promise<void> {
-  const staleBefore = new Date(Date.now() - REVIEW_STALE_AFTER_MS);
+  const now = Date.now();
+  const staleBefore = new Date(now - REVIEW_STALE_AFTER_MS);
+  const recoveryCutoff = new Date(now - REVIEW_RECOVERY_INTERVAL_MS);
+
+  try {
+    await deps.db.webhookDelivery.deleteMany({
+      where: {
+        receivedAt: { lt: new Date(now - WEBHOOK_RETENTION_MS) },
+        status: { in: ["PROCESSED", "IGNORED"] },
+      },
+    });
+  } catch (error) {
+    console.error("[worker] webhook delivery retention sweep failed:", error);
+  }
 
   await deps.db.reviewSession.updateMany({
     where: {
@@ -40,12 +59,14 @@ export async function recoverReviewSessions(
     where: {
       status: { in: ["QUEUED", "RETRYING"] },
       headSha: { not: null },
+      createdAt: { lt: recoveryCutoff },
     },
     include: {
       repository: {
         include: { installation: true },
       },
     },
+    orderBy: { createdAt: "asc" },
     take: 50,
   });
 

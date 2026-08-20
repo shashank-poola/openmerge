@@ -26,6 +26,7 @@ type ReviewWorkerDeps = {
   reviewGraph: WorkerGraph;
   workerId: string;
   now: () => Date;
+  reviewTimeoutMs?: number;
 };
 
 const defaultDeps: ReviewWorkerDeps = {
@@ -60,9 +61,9 @@ function withTimeout<T>(
 async function claimReviewSession(
   job: Job<ReviewJobData>,
   deps: ReviewWorkerDeps,
+  jobId: string,
 ): Promise<boolean> {
   const now = deps.now();
-  const jobId = String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1));
   const claim = await deps.db.reviewSession.updateMany({
     where: {
       id: job.data.reviewSessionId,
@@ -135,7 +136,8 @@ export async function processReviewJob(
   job: Job<ReviewJobData>,
   deps: ReviewWorkerDeps = defaultDeps,
 ): Promise<void> {
-  const claimed = await claimReviewSession(job, deps);
+  const jobId = String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1));
+  const claimed = await claimReviewSession(job, deps, jobId);
   if (!claimed) return;
 
   const heartbeat = setInterval(() => {
@@ -144,7 +146,7 @@ export async function processReviewJob(
         id: job.data.reviewSessionId,
         status: "RUNNING",
         workerId: deps.workerId,
-        jobId: String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1)),
+        jobId,
       },
       data: { heartbeatAt: deps.now() },
     }).catch((error) => {
@@ -159,7 +161,7 @@ export async function processReviewJob(
       (signal) => deps.reviewGraph.invoke({
         reviewSessionId: job.data.reviewSessionId,
         repositoryId: job.data.repositoryId,
-        jobId: String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1)),
+        jobId,
         workerId: deps.workerId,
         githubInstallationId: job.data.githubInstallationId,
         prNumber: job.data.prNumber,
@@ -168,7 +170,7 @@ export async function processReviewJob(
         owner: job.data.owner,
         repoName: job.data.repoName,
       }, { signal }),
-      REVIEW_TIMEOUT_MS,
+      deps.reviewTimeoutMs ?? REVIEW_TIMEOUT_MS,
       "Review processing timed out",
     );
 
@@ -181,7 +183,6 @@ export async function processReviewJob(
       throw new Error(result.error);
     }
 
-    const jobId = String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1));
     const completed = await deps.db.reviewSession.updateMany({
       where: {
         id: job.data.reviewSessionId,
@@ -209,7 +210,6 @@ export async function processReviewJob(
     const maxAttempts = job.opts.attempts ?? 1;
     const willRetry = job.attemptsMade + 1 < maxAttempts;
 
-    const jobId = String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1));
     const updated = await deps.db.reviewSession.updateMany({
       where: {
         id: job.data.reviewSessionId,

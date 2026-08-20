@@ -5,7 +5,8 @@ import { fileURLToPath } from "url";
 import { Worker } from "bullmq";
 import type { ReviewJobData } from "../../server/src/queue/review.queue";
 import { parseRedisUrl } from "./worker.utils";
-import { REVIEW_STALE_AFTER_MS, processReviewJob } from "./review.worker";
+import { processReviewJob } from "./review.worker";
+import { REVIEW_RECOVERY_INTERVAL_MS } from "./review.constants";
 import { recoverReviewSessions } from "./review.recovery";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -40,7 +41,7 @@ const runRecovery = () => {
   });
 };
 
-const recoveryInterval = setInterval(runRecovery, Math.max(REVIEW_STALE_AFTER_MS, 30_000));
+const recoveryInterval = setInterval(runRecovery, REVIEW_RECOVERY_INTERVAL_MS);
 
 runRecovery();
 
@@ -63,8 +64,14 @@ worker.on("error", (error) => {
 const shutdown = async (signal: string) => {
   console.log(`[worker] received ${signal}, shutting down`);
   clearInterval(recoveryInterval);
-  await worker.close();
-  process.exit(0);
+
+  try {
+    await worker.close();
+  } catch (error) {
+    console.error("[worker] failed to close cleanly:", error);
+  } finally {
+    process.exit(0);
+  }
 };
 
 process.once("SIGTERM", () => void shutdown("SIGTERM"));

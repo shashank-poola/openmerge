@@ -65,7 +65,7 @@ async function recordWebhookDelivery(deliveryId: string, eventName: string): Pro
     if (existing?.status === 'FAILED') {
         const reclaimed = await db.webhookDelivery.updateMany({
             where: { deliveryId, status: 'FAILED' },
-            data: { status: 'RECEIVED', errorMessage: null, processedAt: null },
+            data: { status: 'RECEIVED', receivedAt: new Date(), errorMessage: null, processedAt: null },
         });
         return reclaimed.count > 0;
     }
@@ -73,7 +73,7 @@ async function recordWebhookDelivery(deliveryId: string, eventName: string): Pro
     if (existing?.status === 'RECEIVED' && existing.receivedAt < staleBefore) {
         const reclaimed = await db.webhookDelivery.updateMany({
             where: { deliveryId, status: 'RECEIVED', receivedAt: { lt: staleBefore } },
-            data: { status: 'RECEIVED', errorMessage: null, processedAt: null },
+            data: { status: 'RECEIVED', receivedAt: new Date(), errorMessage: null, processedAt: null },
         });
         return reclaimed.count > 0;
     }
@@ -96,7 +96,7 @@ async function updateWebhookDelivery(
     status: 'PROCESSED' | 'IGNORED' | 'FAILED',
     errorMessage?: string,
 ): Promise<void> {
-    await db.webhookDelivery.update({
+    await db.webhookDelivery.updateMany({
         where: { deliveryId },
         data: {
             status,
@@ -270,6 +270,8 @@ export async function handlePullRequestEvent(
 
     try {
         const installationId = Number(repo.installation.githubInstallationId);
+        let createdLoadingCommentId: bigint | null = null;
+
         try {
             const octokit = deps.createInstallationOctokit(installationId);
             if (session.githubLoadingCommentId) {
@@ -284,15 +286,20 @@ export async function handlePullRequestEvent(
                     owner: repo.owner,
                     repo: repo.name,
                     issue_number: prNumber,
-                    body: '**PullRabbit** is analyzing this pull request. An automated review will be posted as inline comments once the analysis is complete.',
+                    body: '**PullRabbit** is analyzing this pull request again. An automated review will be posted as inline comments once the analysis is complete.',
                 });
-                await deps.db.reviewSession.update({
-                    where: { id: session.id },
-                    data: { githubLoadingCommentId: BigInt(comment.id) },
-                });
+                createdLoadingCommentId = BigInt(comment.id);
             }
-        } catch {
+        } catch (error) {
+            console.error('Loading GitHub comment failed:', error);
             // A loading comment is useful but must not prevent review processing.
+        }
+
+        if (createdLoadingCommentId !== null) {
+            await deps.db.reviewSession.update({
+                where: { id: session.id },
+                data: { githubLoadingCommentId: createdLoadingCommentId },
+            });
         }
 
         const attempt = session.attemptCount + 1;

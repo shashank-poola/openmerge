@@ -24,7 +24,7 @@ type RecoverySessionFixture = {
 };
 
 const reviewGraphInvokeMock = mock(async () => ({
-  error: null,
+  error: null as string | null,
   changedFiles: ["src/index.ts"],
   allComments: [{ filePath: "src/index.ts" }],
 }));
@@ -35,6 +35,7 @@ const sessionFindUniqueMock = mock(async () => ({
 }));
 const sessionUpdateMock = mock(async () => ({ id: "session-1" }));
 const sessionFindManyMock = mock<() => Promise<RecoverySessionFixture[]>>(async () => []);
+const webhookDeliveryDeleteManyMock = mock(async () => ({ count: 0 }));
 const queueAddMock = mock(async () => undefined);
 const queueGetJobMock = mock(async () => undefined);
 
@@ -49,6 +50,9 @@ const jobData: ReviewJobData = {
   owner: "octocat",
   repoName: "hello-world",
 };
+
+type WorkerTestDeps = NonNullable<Parameters<typeof processReviewJob>[1]>
+  & NonNullable<Parameters<typeof recoverReviewSessions>[0]>;
 
 function createJob(overrides: Partial<Job<ReviewJobData>> = {}) {
   return {
@@ -69,6 +73,9 @@ function createDeps() {
         update: sessionUpdateMock,
         findMany: sessionFindManyMock,
       },
+      webhookDelivery: {
+        deleteMany: webhookDeliveryDeleteManyMock,
+      },
     },
     reviewQueue: {
       add: queueAddMock,
@@ -79,7 +86,7 @@ function createDeps() {
     },
     workerId: "test-worker",
     now: () => new Date("2026-08-20T12:00:00.000Z"),
-  } as unknown as Parameters<typeof processReviewJob>[1];
+  } as unknown as WorkerTestDeps;
 }
 
 beforeEach(() => {
@@ -96,7 +103,10 @@ beforeEach(() => {
   sessionUpdateMock.mockClear();
   sessionFindManyMock.mockReset();
   sessionFindManyMock.mockResolvedValue([]);
-  queueAddMock.mockClear();
+  webhookDeliveryDeleteManyMock.mockReset();
+  webhookDeliveryDeleteManyMock.mockResolvedValue({ count: 0 });
+  queueAddMock.mockReset();
+  queueAddMock.mockResolvedValue(undefined);
   queueGetJobMock.mockReset();
   queueGetJobMock.mockResolvedValue(undefined);
 });
@@ -137,8 +147,64 @@ describe("processReviewJob", () => {
 
     await processReviewJob(createJob(), createDeps());
 
+    expect(sessionUpdateManyMock).toHaveBeenCalledTimes(1);
+    expect(sessionUpdateManyMock).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "session-1", status: { in: ["QUEUED", "RETRYING"] } },
+      data: expect.objectContaining({ status: "RUNNING", jobId: "review:session-1:attempt:1" }),
+    }));
     expect(reviewGraphInvokeMock).not.toHaveBeenCalled();
     expect(sessionUpdateMock).not.toHaveBeenCalled();
+  });
+
+  test("returns without writing a final status after losing ownership", async () => {
+    reviewGraphInvokeMock.mockResolvedValueOnce({
+      error: "REVIEW_OWNERSHIP_LOST",
+      changedFiles: [],
+      allComments: [],
+    });
+
+    await processReviewJob(createJob(), createDeps());
+
+    expect(sessionUpdateManyMock).toHaveBeenCalledTimes(1);
+    expect(sessionUpdateManyMock).not.toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: "COMPLETED" }),
+    }));
+    expect(sessionUpdateManyMock).not.toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: "FAILED" }),
+    }));
+  });
+
+  test("records a timeout as a retryable review failure", async () => {
+    reviewGraphInvokeMock.mockImplementationOnce(() => new Promise(() => undefined));
+
+    await expect(processReviewJob(
+      createJob(),
+      { ...createDeps(), reviewTimeoutMs: 1 },
+    )).rejects.toThrow("Review processing timed out");
+
+    expect(sessionUpdateManyMock).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        status: "RETRYING",
+        lastErrorCode: "REVIEW_TIMEOUT",
+      }),
+    }));
+  });
+
+  test("marks a terminal failure when the retry limit is reached", async () => {
+    reviewGraphInvokeMock.mockRejectedValueOnce(new Error("provider failed"));
+
+    await expect(processReviewJob(
+      createJob({ attemptsMade: 2, id: "review:session-1:attempt:3" }),
+      createDeps(),
+    )).rejects.toThrow("provider failed");
+
+    expect(sessionUpdateManyMock).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ jobId: "review:session-1:attempt:3" }),
+      data: expect.objectContaining({
+        status: "FAILED",
+        lastErrorCode: "REVIEW_PROCESSING_FAILED",
+      }),
+    }));
   });
 });
 
@@ -165,6 +231,21 @@ describe("recoverReviewSessions", () => {
 
     await recoverReviewSessions(createDeps());
 
+    expect(webhookDeliveryDeleteManyMock).toHaveBeenCalledWith({
+      where: {
+        receivedAt: { lt: expect.any(Date) },
+        status: { in: ["PROCESSED", "IGNORED"] },
+      },
+    });
+    expect(sessionFindManyMock).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        status: { in: ["QUEUED", "RETRYING"] },
+        headSha: { not: null },
+        createdAt: { lt: expect.any(Date) },
+      },
+      orderBy: { createdAt: "asc" },
+      take: 50,
+    }));
     expect(queueAddMock).toHaveBeenCalledWith(
       "review",
       expect.objectContaining({ reviewSessionId: "session-2", reviewKey: "repo-2:7:sha-2" }),
