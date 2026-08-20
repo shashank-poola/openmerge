@@ -8,7 +8,7 @@ import { reviewQueue } from '../../queue/review.queue';
 
 const webhooks = new Webhooks({ secret: env.GITHUB_WEBHOOK_SECRET });
 
-type PullRequestPayload = {
+export type PullRequestPayload = {
     action: string;
     number: number;
     pull_request: {
@@ -19,12 +19,12 @@ type PullRequestPayload = {
     installation?: { id: number };
 };
 
-type InstallationPayload = {
+export type InstallationPayload = {
     action: string;
     installation: { id: number };
 };
 
-const createInstallationOctokit = (installationId: number) =>
+export const createInstallationOctokit = (installationId: number) =>
     new Octokit({
         authStrategy: createAppAuth,
         auth: {
@@ -63,7 +63,25 @@ export const handleWebhook = async (req: Request, res: Response) => {
     }
 };
 
-async function handleInstallationEvent(payload: InstallationPayload) {
+type InstallationModel = {
+    updateMany: (args: {
+        where: { githubInstallationId: bigint };
+        data: { status: 'ACTIVE' | 'SUSPENDED' | 'REMOVED' };
+    }) => Promise<unknown>;
+};
+
+type WebhookDb = Pick<typeof db, "installation" | "repository" | "reviewSession">;
+
+type PullRequestDeps = {
+    db: WebhookDb;
+    reviewQueue: Pick<typeof reviewQueue, "add">;
+    createInstallationOctokit: typeof createInstallationOctokit;
+};
+
+export async function handleInstallationEvent(
+    payload: InstallationPayload,
+    installationModel: InstallationModel = db.installation,
+) {
     const githubInstallationId = BigInt(payload.installation.id);
     const statusMap: Record<string, 'ACTIVE' | 'SUSPENDED' | 'REMOVED'> = {
         deleted: 'REMOVED',
@@ -72,16 +90,19 @@ async function handleInstallationEvent(payload: InstallationPayload) {
     };
     const status = statusMap[payload.action];
     if (!status) return;
-    await db.installation.updateMany({ where: { githubInstallationId }, data: { status } });
+    await installationModel.updateMany({ where: { githubInstallationId }, data: { status } });
 }
 
-async function handlePullRequestEvent(payload: PullRequestPayload) {
+export async function handlePullRequestEvent(
+    payload: PullRequestPayload,
+    deps: PullRequestDeps = { db, reviewQueue, createInstallationOctokit },
+) {
     const triggerActions = ['opened', 'synchronize', 'reopened'];
     if (!triggerActions.includes(payload.action)) return;
 
     const githubRepoId = BigInt(payload.repository.id);
 
-    const repo = await db.repository.findUnique({
+    const repo = await deps.db.repository.findUnique({
         where: { githubRepoId },
         include: { installation: { select: { status: true, githubInstallationId: true } } },
     });
@@ -94,25 +115,25 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
     const headSha = payload.pull_request.head.sha;
     const baseBranch = payload.pull_request.base.ref;
 
-    const existing = await db.reviewSession.findFirst({
+    const existing = await deps.db.reviewSession.findFirst({
         where: { repositoryId: repo.id, prNumber, status: { in: ['QUEUED', 'RUNNING'] } },
     });
 
     let session;
     if (existing) {
-        session = await db.reviewSession.update({
+        session = await deps.db.reviewSession.update({
             where: { id: existing.id },
             data: { headSha, status: 'QUEUED' },
         });
     } else {
-        session = await db.reviewSession.create({
+        session = await deps.db.reviewSession.create({
             data: { repositoryId: repo.id, prNumber, headSha, baseBranch, status: 'QUEUED' },
         });
     }
 
     let loadingCommentId: bigint | null = null;
     try {
-        const octokit = createInstallationOctokit(installationId);
+        const octokit = deps.createInstallationOctokit(installationId);
         const { data: comment } = await octokit.rest.issues.createComment({
             owner: repo.owner,
             repo: repo.name,
@@ -120,13 +141,13 @@ async function handlePullRequestEvent(payload: PullRequestPayload) {
             body: '**PullRabbit** is analyzing this pull request. An automated review will be posted as inline comments once the analysis is complete.',
         });
         loadingCommentId = BigInt(comment.id);
-        await db.reviewSession.update({
+        await deps.db.reviewSession.update({
             where: { id: session.id },
             data: { githubLoadingCommentId: loadingCommentId },
         });
     } catch { /* */ }
 
-    await reviewQueue.add('review', {
+    await deps.reviewQueue.add('review', {
         reviewSessionId: session.id,
         repositoryId: repo.id,
         githubInstallationId: repo.installation.githubInstallationId.toString(),
