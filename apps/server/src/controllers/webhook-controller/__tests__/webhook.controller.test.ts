@@ -16,12 +16,34 @@ type RepoLookupResult = {
   };
 } | null;
 
+type ReviewSessionLookup = {
+  id: string;
+  status: "QUEUED" | "RUNNING" | "RETRYING" | "COMPLETED" | "FAILED";
+  attemptCount: number;
+  reviewKey: string | null;
+  jobId: string | null;
+} | null;
+
 const verifyMock = mock<(payload: string, signature: string) => Promise<boolean>>(async () => true);
+const recordDeliveryMock = mock(async () => true);
+const updateDeliveryMock = mock(async () => undefined);
 const installationUpdateManyMock = mock(async () => ({ count: 1 }));
 const repoFindUniqueMock = mock<() => Promise<RepoLookupResult>>(async () => null);
-const reviewSessionFindFirstMock = mock(async () => null);
-const reviewSessionCreateMock = mock(async () => ({ id: "session-1" }));
-const reviewSessionUpdateMock = mock(async () => ({ id: "session-1" }));
+const reviewSessionFindUniqueMock = mock<() => Promise<ReviewSessionLookup>>(async () => null);
+const reviewSessionCreateMock = mock<() => Promise<NonNullable<ReviewSessionLookup>>>(async () => ({
+  id: "session-1",
+  status: "QUEUED",
+  attemptCount: 0,
+  reviewKey: "repo-1:17:head-sha",
+  jobId: null,
+}));
+const reviewSessionUpdateMock = mock<() => Promise<NonNullable<ReviewSessionLookup>>>(async () => ({
+  id: "session-1",
+  status: "QUEUED",
+  attemptCount: 0,
+  reviewKey: "repo-1:17:head-sha",
+  jobId: null,
+}));
 const reviewQueueAddMock = mock(async () => undefined);
 
 mock.module("@octokit/webhooks", () => ({
@@ -31,20 +53,24 @@ mock.module("@octokit/webhooks", () => ({
 }));
 
 let handleWebhook: typeof import("../webhook.controller").handleWebhook;
+let handleWebhookRequest: typeof import("../webhook.controller").handleWebhookRequest;
 let handleInstallationEvent: typeof import("../webhook.controller").handleInstallationEvent;
 let handlePullRequestEvent: typeof import("../webhook.controller").handlePullRequestEvent;
 
 beforeAll(async () => {
   const modulePath = "../webhook.controller";
-  ({ handleWebhook, handleInstallationEvent, handlePullRequestEvent } = await import(modulePath));
+  ({ handleWebhook, handleWebhookRequest, handleInstallationEvent, handlePullRequestEvent } = await import(modulePath));
 });
 
 beforeEach(() => {
   verifyMock.mockReset();
   verifyMock.mockResolvedValue(true);
+  recordDeliveryMock.mockClear();
+  updateDeliveryMock.mockClear();
   installationUpdateManyMock.mockClear();
   repoFindUniqueMock.mockClear();
-  reviewSessionFindFirstMock.mockClear();
+  reviewSessionFindUniqueMock.mockReset();
+  reviewSessionFindUniqueMock.mockResolvedValue(null);
   reviewSessionCreateMock.mockClear();
   reviewSessionUpdateMock.mockClear();
   reviewQueueAddMock.mockClear();
@@ -72,6 +98,7 @@ describe("handleWebhook", () => {
       headers: {
         "x-hub-signature-256": "sha256=invalid",
         "x-github-event": "installation",
+        "x-github-delivery": "delivery-1",
       },
       body: { action: "deleted", installation: { id: 42 } },
       rawBody: Buffer.from("{}"),
@@ -83,6 +110,87 @@ describe("handleWebhook", () => {
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.body).toEqual({ success: false, error: "INVALID_SIGNATURE" });
     expect(installationUpdateManyMock).not.toHaveBeenCalled();
+  });
+
+  test("ignores duplicate webhook deliveries", async () => {
+    recordDeliveryMock.mockResolvedValue(false);
+    const installationHandlerMock = mock(async () => undefined);
+    const deps = {
+      verify: verifyMock,
+      recordDelivery: recordDeliveryMock,
+      updateDelivery: updateDeliveryMock,
+      handleInstallationEvent: installationHandlerMock,
+      handlePullRequestEvent: mock(async () => undefined),
+    } as unknown as Parameters<typeof handleWebhookRequest>[2];
+    const req = createMockRequest({
+      headers: {
+        "x-hub-signature-256": "sha256=valid",
+        "x-github-event": "installation",
+        "x-github-delivery": "delivery-duplicate",
+      },
+      body: { action: "deleted", installation: { id: 42 } },
+      rawBody: Buffer.from("{}"),
+    });
+    const res = createMockResponse();
+
+    await handleWebhookRequest(req, res, deps);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.body).toEqual({ success: true, duplicate: true });
+    expect(installationHandlerMock).not.toHaveBeenCalled();
+    expect(updateDeliveryMock).not.toHaveBeenCalled();
+  });
+
+  test("does not enqueue the same PR and SHA more than once", async () => {
+    repoFindUniqueMock.mockResolvedValue({
+      id: "repo-1",
+      owner: "octocat",
+      name: "hello-world",
+      isActive: true,
+      autoReviewEnabled: true,
+      installation: {
+        status: "ACTIVE",
+        githubInstallationId: 99n,
+      },
+    });
+    reviewSessionFindUniqueMock.mockResolvedValue({
+      id: "session-1",
+      status: "QUEUED",
+      attemptCount: 1,
+      reviewKey: "repo-1:17:head-sha",
+      jobId: "review:session-1:attempt:1",
+    });
+
+    const deps = {
+      db: {
+        installation: { updateMany: installationUpdateManyMock },
+        repository: { findUnique: repoFindUniqueMock },
+        reviewSession: {
+          findUnique: reviewSessionFindUniqueMock,
+          create: reviewSessionCreateMock,
+          update: reviewSessionUpdateMock,
+        },
+      },
+      reviewQueue: { add: reviewQueueAddMock },
+      createInstallationOctokit: mock(() => {
+        throw new Error("should not create a GitHub client for a duplicate review");
+      }),
+    } as unknown as NonNullable<Parameters<typeof handlePullRequestEvent>[1]>;
+
+    await handlePullRequestEvent({
+      action: "synchronize",
+      number: 17,
+      pull_request: {
+        head: { sha: "head-sha" },
+        base: { ref: "main" },
+      },
+      repository: { id: 123 },
+    }, deps);
+
+    expect(reviewSessionFindUniqueMock).toHaveBeenCalledWith({
+      where: { reviewKey: "repo-1:17:head-sha" },
+    });
+    expect(reviewQueueAddMock).not.toHaveBeenCalled();
   });
 
   test("marks deleted installations as removed", async () => {
@@ -114,7 +222,7 @@ describe("handleWebhook", () => {
         installation: { updateMany: installationUpdateManyMock },
         repository: { findUnique: repoFindUniqueMock },
         reviewSession: {
-          findFirst: reviewSessionFindFirstMock,
+          findUnique: reviewSessionFindUniqueMock,
           create: reviewSessionCreateMock,
           update: reviewSessionUpdateMock,
         },

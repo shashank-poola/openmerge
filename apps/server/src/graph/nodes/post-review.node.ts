@@ -191,16 +191,7 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
     const totalDurationMs = Date.now() - queuedAt;
 
     try {
-        await db.reviewSession.update({
-            where: { id: state.reviewSessionId },
-            data: { status: "RUNNING" },
-        });
-
         if (state.error) {
-            await db.reviewSession.update({
-                where: { id: state.reviewSessionId },
-                data: { status: "FAILED", errorMessage: state.error, completedAt: new Date() },
-            });
             if (loadingCommentId) {
                 try {
                     await octokit.rest.issues.updateComment({
@@ -211,7 +202,7 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
                     });
                 } catch { /* */ }
             }
-            return {};
+            return { error: state.error };
         }
 
         const comments = state.allComments;
@@ -250,23 +241,9 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
             });
         }
 
-        await db.reviewSession.update({
-            where: { id: state.reviewSessionId },
-            data: {
-                status: "COMPLETED",
-                filesReviewed: state.changedFiles.length,
-                totalComments: comments.length,
-                completedAt: new Date(),
-            },
-        });
-
         return {};
     } catch (err) {
         console.error("postReview failed:", err);
-        await db.reviewSession.update({
-            where: { id: state.reviewSessionId },
-            data: { status: "FAILED", errorMessage: String(err), completedAt: new Date() },
-        });
         return { error: String(err) };
     } finally {
         if (state.repoLocalPath) {
