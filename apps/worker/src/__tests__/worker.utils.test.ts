@@ -19,4 +19,13 @@ describe("parseRedisUrl", () => {
     });
     expect(parseRedisUrl("not a redis url")).toEqual({ host: "127.0.0.1", port: 6379 });
   });
+
+  test("enables TLS for rediss URLs and rejects unsupported schemes", () => {
+    expect(parseRedisUrl("rediss://secure-cache.internal:6380")).toEqual({
+      host: "secure-cache.internal",
+      port: 6380,
+      tls: {},
+    });
+    expect(() => parseRedisUrl("https://cache.internal:6380")).toThrow("Unsupported Redis protocol: https:");
+  });
 });

@@ -57,6 +57,25 @@ describe("resolveImports", () => {
     expect(imports).toHaveLength(1);
   });
 
+  test("canonicalizes changed-file paths before exact matching", async () => {
+    const repo = await createRepoFixture();
+    await mkdir(join(repo, "src"), { recursive: true });
+    await writeFile(join(repo, "src", "main.ts"), [
+      "import { helper } from './helper';",
+      "import { nested } from './nested/value';",
+    ].join("\n"));
+    await mkdir(join(repo, "src", "nested"), { recursive: true });
+    await writeFile(join(repo, "src", "helper.ts"), "export const helper = () => 'skip';");
+    await writeFile(join(repo, "src", "nested", "value.ts"), "export const nested = () => 'skip';");
+
+    const imports = await resolveImports({
+      changedFiles: ["src/main.ts", "./src/helper.ts", "src/nested/../nested/value.ts"],
+      repoLocalPath: repo,
+    });
+
+    expect(imports).toHaveLength(0);
+  });
+
   test("resolves Python relative imports without leaking external imports", async () => {
     const repo = await createRepoFixture();
     await mkdir(join(repo, "pkg"), { recursive: true });

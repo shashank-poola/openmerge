@@ -3,18 +3,32 @@ export type RedisConnection = {
   port: number;
   password?: string;
   username?: string;
+  tls?: Record<string, never>;
+};
+
+const DEFAULT_REDIS_CONNECTION: RedisConnection = {
+  host: "127.0.0.1",
+  port: 6379,
 };
 
 export function parseRedisUrl(url: string): RedisConnection {
+  let parsed: URL;
+
   try {
-    const parsed = new URL(url);
-    return {
-      host: parsed.hostname || "127.0.0.1",
-      port: Number(parsed.port) || 6379,
-      ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
-      ...(parsed.username && parsed.username !== "default" ? { username: parsed.username } : {}),
-    };
+    parsed = new URL(url);
   } catch {
-    return { host: "127.0.0.1", port: 6379 };
+    return DEFAULT_REDIS_CONNECTION;
   }
+
+  if (parsed.protocol !== "redis:" && parsed.protocol !== "rediss:") {
+    throw new Error(`Unsupported Redis protocol: ${parsed.protocol}`);
+  }
+
+  return {
+    host: parsed.hostname || DEFAULT_REDIS_CONNECTION.host,
+    port: Number(parsed.port) || DEFAULT_REDIS_CONNECTION.port,
+    ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
+    ...(parsed.username && parsed.username !== "default" ? { username: parsed.username } : {}),
+    ...(parsed.protocol === "rediss:" ? { tls: {} } : {}),
+  };
 }

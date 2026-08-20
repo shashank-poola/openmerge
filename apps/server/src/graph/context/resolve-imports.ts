@@ -9,6 +9,12 @@ const MAX_SOURCE_CHARS = 4_000;
 
 const toPosixPath = (path: string) => path.replace(/\\/g, "/");
 
+const toRepoRelativePath = (repoRoot: string, targetPath: string) => {
+    const repoRootAbs = resolve(repoRoot);
+    const targetAbs = resolve(targetPath);
+    return toPosixPath(relative(repoRootAbs, targetAbs));
+};
+
 const resolveLocalPathTS = async (
     importPath: string,
     fromFile: string,
@@ -81,7 +87,9 @@ export const resolveImports = async (params: {
 }): Promise<ImportSource[]> => {
     const results: ImportSource[] = [];
     const seen = new Set<string>();
-    const changedFileSet = new Set(params.changedFiles.map(toPosixPath));
+    const changedFileSet = new Set(
+        params.changedFiles.map((filePath) => toRepoRelativePath(params.repoLocalPath, join(params.repoLocalPath, filePath)))
+    );
 
     await Promise.all(
         params.changedFiles
@@ -105,7 +113,7 @@ export const resolveImports = async (params: {
                             const resolvedAbsPath = await resolveLocalPathPython(imp, filePath, params.repoLocalPath);
                             if (!resolvedAbsPath) continue;
 
-                            const resolvedRelPath = toPosixPath(relative(resolve(params.repoLocalPath), resolvedAbsPath));
+                            const resolvedRelPath = toRepoRelativePath(params.repoLocalPath, resolvedAbsPath);
                             if (changedFileSet.has(resolvedRelPath)) continue;
 
                             try {
@@ -134,7 +142,7 @@ export const resolveImports = async (params: {
                             const resolvedAbsPath = await resolveLocalPathTS(imp, filePath, params.repoLocalPath);
                             if (!resolvedAbsPath) continue;
 
-                            const resolvedRelPath = toPosixPath(relative(resolve(params.repoLocalPath), resolvedAbsPath));
+                            const resolvedRelPath = toRepoRelativePath(params.repoLocalPath, resolvedAbsPath);
                             if (changedFileSet.has(resolvedRelPath)) continue;
 
                             try {

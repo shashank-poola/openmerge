@@ -42,7 +42,13 @@ export function createMockResponse(): MockResponse {
     return res;
   });
   res.redirect = mock<(statusOrUrl: number | string, url?: string) => MockResponse>((statusOrUrl, url) => {
-    res.redirectUrl = typeof statusOrUrl === "string" ? statusOrUrl : url;
+    if (typeof statusOrUrl === "string") {
+      res.statusCode = 302;
+      res.redirectUrl = statusOrUrl;
+    } else {
+      res.statusCode = statusOrUrl;
+      res.redirectUrl = url;
+    }
     return res;
   }) as MockResponse["redirect"];
 
