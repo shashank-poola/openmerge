@@ -6,6 +6,7 @@ import { Worker } from "bullmq";
 import { db } from "@repo/database";
 import { reviewGraph } from "../../server/src/graph/review.graph";
 import type { ReviewJobData } from "../../server/src/queue/review.queue";
+import { parseRedisUrl } from "./worker.utils";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPaths = [
@@ -20,20 +21,6 @@ for (const envPath of envPaths) {
     dotenv.config({ path: envPath });
   }
 }
-
-const parseRedisUrl = (url: string) => {
-    try {
-        const parsed = new URL(url);
-        return {
-            host: parsed.hostname || "127.0.0.1",
-            port: Number(parsed.port) || 6379,
-            ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
-            ...(parsed.username && parsed.username !== "default" ? { username: parsed.username } : {}),
-        };
-    } catch {
-        return { host: "127.0.0.1", port: 6379 };
-    }
-};
 
 const connection = parseRedisUrl(process.env.REDIS_URL ?? "redis://127.0.0.1:6379");
 

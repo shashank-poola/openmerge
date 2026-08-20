@@ -1,7 +1,17 @@
-import { beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
 import jwt from "jsonwebtoken";
 import { setupTestEnv } from "../../support/env";
 import { createMockRequest, createMockResponse } from "../../support/express";
+
+type GithubExchangeFn = typeof import("../../../apps/server/src/controllers/user-controller/auth.controller").githubExchange;
+type FetchFn = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+type GithubExchangeSuccessBody = {
+  success: true;
+  token: string;
+  user: {
+    githubUserId: string;
+  };
+};
 
 setupTestEnv();
 
@@ -26,7 +36,9 @@ mock.module("@repo/database", () => ({
   },
 }));
 
-let githubExchange: any;
+let githubExchange: GithubExchangeFn;
+const fetchMock = mock<FetchFn>(async () => new Response(null, { status: 500 }));
+const originalFetch = globalThis.fetch;
 
 beforeAll(async () => {
   const modulePath = "../../../apps/server/src/controllers/user-controller/auth.controller";
@@ -35,7 +47,12 @@ beforeAll(async () => {
 
 beforeEach(() => {
   upsertMock.mockClear();
-  globalThis.fetch = mock() as unknown as typeof fetch;
+  fetchMock.mockReset();
+  globalThis.fetch = fetchMock as unknown as typeof fetch;
+});
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
 });
 
 function jsonResponse(body: unknown, init: ResponseInit = {}) {
@@ -59,7 +76,7 @@ describe("githubExchange", () => {
   });
 
   test("returns a gateway error when GitHub token exchange fails", async () => {
-    (globalThis.fetch as any).mockResolvedValueOnce(jsonResponse({ error: "bad_verification_code" }, { status: 502 }));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ error: "bad_verification_code" }, { status: 502 }));
 
     const req = createMockRequest({ body: { code: "bad-code" } });
     const res = createMockResponse();
@@ -72,7 +89,7 @@ describe("githubExchange", () => {
   });
 
   test("rejects token responses without an access token", async () => {
-    (globalThis.fetch as any).mockResolvedValueOnce(jsonResponse({ error: "incorrect_client_credentials" }));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ error: "incorrect_client_credentials" }));
 
     const req = createMockRequest({ body: { code: "code" } });
     const res = createMockResponse();
@@ -85,7 +102,7 @@ describe("githubExchange", () => {
   });
 
   test("does not create a user when profile fetch fails", async () => {
-    (globalThis.fetch as any)
+    fetchMock
       .mockResolvedValueOnce(jsonResponse({ access_token: "gho_token" }))
       .mockResolvedValueOnce(jsonResponse({ message: "bad credentials" }, { status: 401 }));
 
@@ -100,7 +117,7 @@ describe("githubExchange", () => {
   });
 
   test("upserts a validated GitHub profile and returns a signed session token", async () => {
-    (globalThis.fetch as any)
+    fetchMock
       .mockResolvedValueOnce(jsonResponse({ access_token: "gho_token" }))
       .mockResolvedValueOnce(jsonResponse({
         id: 123,
@@ -131,11 +148,13 @@ describe("githubExchange", () => {
         avatarUrl: "https://avatars.githubusercontent.com/u/123?v=4",
       },
     });
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.user.githubUserId).toBe("123");
+    const body = res.body as GithubExchangeSuccessBody;
 
-    const decoded = jwt.verify(res.body.token, process.env.SERVER_JWT_SECRET!) as jwt.JwtPayload;
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(body.success).toBe(true);
+    expect(body.user.githubUserId).toBe("123");
+
+    const decoded = jwt.verify(body.token, process.env.SERVER_JWT_SECRET!) as jwt.JwtPayload;
     expect(decoded.userId).toBe("user-1");
     expect(decoded.githubLogin).toBe("octocat");
   });

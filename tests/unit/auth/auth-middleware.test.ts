@@ -1,12 +1,16 @@
 import { beforeAll, describe, expect, mock, test } from "bun:test";
+import type { NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { setupTestEnv } from "../../support/env";
 import { createMockRequest, createMockResponse } from "../../support/express";
 
+type AuthMiddlewareFn = typeof import("../../../apps/server/src/middleware/auth.middleware").authMiddleware;
+type SignTokenFn = typeof import("../../../apps/server/src/middleware/auth.middleware").signToken;
+
 setupTestEnv();
 
-let authMiddleware: any;
-let signToken: any;
+let authMiddleware: AuthMiddlewareFn;
+let signToken: SignTokenFn;
 
 beforeAll(async () => {
   const modulePath = "../../../apps/server/src/middleware/auth.middleware";
@@ -19,49 +23,49 @@ describe("authMiddleware", () => {
   test("rejects requests without a bearer token", async () => {
     const req = createMockRequest();
     const res = createMockResponse();
-    const next = mock(() => undefined);
+    const nextMock = mock<(deferToNext?: "route" | "router") => void>(() => undefined);
 
-    await authMiddleware(req, res, next);
+    await authMiddleware(req, res, nextMock as unknown as NextFunction);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.body).toEqual({ success: false, message: null, error: "TOKEN_REQUIRED" });
-    expect(next).not.toHaveBeenCalled();
+    expect(nextMock).not.toHaveBeenCalled();
   });
 
   test("rejects malformed and invalid tokens without calling next", async () => {
     const req = createMockRequest({ headers: { authorization: "Bearer not-a-valid-jwt" } });
     const res = createMockResponse();
-    const next = mock(() => undefined);
+    const nextMock = mock<(deferToNext?: "route" | "router") => void>(() => undefined);
 
-    await authMiddleware(req, res, next);
+    await authMiddleware(req, res, nextMock as unknown as NextFunction);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.body).toEqual({ success: false, message: null, error: "INVALID_TOKEN" });
-    expect(next).not.toHaveBeenCalled();
+    expect(nextMock).not.toHaveBeenCalled();
   });
 
   test("rejects non-Bearer authorization schemes", async () => {
     const token = signToken("user-1", "dev@pullrabbit.dev");
     const req = createMockRequest({ headers: { authorization: `Basic ${token}` } });
     const res = createMockResponse();
-    const next = mock(() => undefined);
+    const nextMock = mock<(deferToNext?: "route" | "router") => void>(() => undefined);
 
-    await authMiddleware(req, res, next);
+    await authMiddleware(req, res, nextMock as unknown as NextFunction);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.body.error).toBe("TOKEN_REQUIRED");
-    expect(next).not.toHaveBeenCalled();
+    expect(res.body).toEqual({ success: false, message: null, error: "TOKEN_REQUIRED" });
+    expect(nextMock).not.toHaveBeenCalled();
   });
 
   test("accepts signed tokens and attaches auth context", async () => {
     const token = signToken("user-123", "dev@pullrabbit.dev");
     const req = createMockRequest({ headers: { authorization: `Bearer ${token}` } });
     const res = createMockResponse();
-    const next = mock(() => undefined);
+    const nextMock = mock<(deferToNext?: "route" | "router") => void>(() => undefined);
 
-    await authMiddleware(req, res, next);
+    await authMiddleware(req, res, nextMock as unknown as NextFunction);
 
-    expect(next).toHaveBeenCalledTimes(1);
+    expect(nextMock).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
     expect(req.user).toMatchObject({ userId: "user-123", email: "dev@pullrabbit.dev" });
     expect(req.userId).toBe("user-123");

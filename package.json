@@ -8,9 +8,9 @@
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
-    "test": "bun test tests",
-    "test:unit": "bun test tests/unit",
-    "test:integration": "bun test tests/integration"
+    "test": "bun test tests apps/server apps/web apps/worker",
+    "test:unit": "bun test tests/unit apps/server apps/web apps/worker",
+    "test:integration": "bun test tests/integration apps/server/__tests__"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

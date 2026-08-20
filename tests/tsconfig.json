@@ -1,8 +1,0 @@
-{
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "allowImportingTsExtensions": true,
-    "types": ["bun-types"]
-  },
-  "include": ["**/*.ts", "../apps/server/src/**/*.ts"]
-}
