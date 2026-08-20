@@ -23,9 +23,14 @@ type ReviewSessionLookup = {
   reviewKey: string | null;
   jobId: string | null;
 } | null;
+type DeliveryClaim = { deliveryId: string; receivedAt: Date };
 
+const defaultDeliveryClaim: DeliveryClaim = {
+  deliveryId: "delivery-1",
+  receivedAt: new Date("2026-08-20T12:00:00.000Z"),
+};
 const verifyMock = mock<(payload: string, signature: string) => Promise<boolean>>(async () => true);
-const recordDeliveryMock = mock(async () => true);
+const recordDeliveryMock = mock<() => Promise<DeliveryClaim | null>>(async () => defaultDeliveryClaim);
 const updateDeliveryMock = mock(async () => undefined);
 const installationUpdateManyMock = mock(async () => ({ count: 1 }));
 const repoFindUniqueMock = mock<() => Promise<RepoLookupResult>>(async () => null);
@@ -69,7 +74,7 @@ beforeEach(() => {
   verifyMock.mockReset();
   verifyMock.mockResolvedValue(true);
   recordDeliveryMock.mockReset();
-  recordDeliveryMock.mockResolvedValue(true);
+  recordDeliveryMock.mockResolvedValue(defaultDeliveryClaim);
   updateDeliveryMock.mockReset();
   updateDeliveryMock.mockResolvedValue(undefined);
   installationUpdateManyMock.mockClear();
@@ -125,7 +130,7 @@ describe("handleWebhook", () => {
   });
 
   test("ignores duplicate webhook deliveries", async () => {
-    recordDeliveryMock.mockResolvedValue(false);
+    recordDeliveryMock.mockResolvedValue(null);
     const installationHandlerMock = mock(async () => undefined);
     const deps = {
       verify: verifyMock,
@@ -209,6 +214,70 @@ describe("handleWebhook", () => {
     });
   });
 
+  test("allows only one concurrent scheduler for the same review key", async () => {
+    repoFindUniqueMock.mockResolvedValue({
+      id: "repo-1",
+      owner: "octocat",
+      name: "hello-world",
+      isActive: true,
+      autoReviewEnabled: true,
+      installation: {
+        status: "ACTIVE",
+        githubInstallationId: 99n,
+      },
+    });
+    reviewSessionFindUniqueMock.mockResolvedValue({
+      id: "session-1",
+      status: "QUEUED",
+      attemptCount: 0,
+      reviewKey: "repo-1:17:head-sha",
+      jobId: null,
+    });
+    reviewSessionUpdateManyMock.mockReset();
+    reviewSessionUpdateManyMock.mockResolvedValueOnce({ count: 1 });
+    reviewSessionUpdateManyMock.mockResolvedValueOnce({ count: 0 });
+
+    const deps = {
+      db: {
+        installation: { updateMany: installationUpdateManyMock },
+        repository: { findUnique: repoFindUniqueMock },
+        reviewSession: {
+          findUnique: reviewSessionFindUniqueMock,
+          create: reviewSessionCreateMock,
+          update: reviewSessionUpdateMock,
+          updateMany: reviewSessionUpdateManyMock,
+        },
+      },
+      reviewQueue: { add: reviewQueueAddMock },
+      createInstallationOctokit: () => ({
+        rest: {
+          issues: {
+            createComment: loadingCommentCreateMock,
+            updateComment: loadingCommentUpdateMock,
+          },
+        },
+      }),
+    } as unknown as NonNullable<Parameters<typeof handlePullRequestEvent>[1]>;
+
+    const payload = {
+      action: "synchronize",
+      number: 17,
+      pull_request: {
+        head: { sha: "head-sha" },
+        base: { ref: "main" },
+      },
+      repository: { id: 123 },
+    };
+
+    await Promise.all([
+      handlePullRequestEvent(payload, deps),
+      handlePullRequestEvent(payload, deps),
+    ]);
+
+    expect(reviewQueueAddMock).toHaveBeenCalledTimes(1);
+    expect(loadingCommentCreateMock).toHaveBeenCalledTimes(1);
+  });
+
   test("marks a session retrying when publishing the review job fails", async () => {
     repoFindUniqueMock.mockResolvedValue({
       id: "repo-1",
@@ -258,11 +327,13 @@ describe("handleWebhook", () => {
     expect(reviewSessionUpdateManyMock).toHaveBeenCalledWith({
       where: {
         id: "session-1",
-        status: { in: ["QUEUED", "RETRYING"] },
-        jobId: null,
+        status: "QUEUED",
+        jobId: "review:session-1:attempt:1",
       },
       data: {
         status: "RETRYING",
+        jobId: null,
+        leaseId: null,
         lastErrorCode: "QUEUE_PUBLISH_FAILED",
         errorMessage: "Redis unavailable",
       },

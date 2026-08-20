@@ -26,6 +26,7 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
       createdAt: true,
       status: true,
       jobId: true,
+      leaseId: true,
       workerId: true,
     },
   });
@@ -34,6 +35,7 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
     !session ||
     session.status !== "RUNNING" ||
     session.jobId !== state.jobId ||
+    session.leaseId !== state.leaseId ||
     session.workerId !== state.workerId
   ) {
     if (state.repoLocalPath) {
@@ -65,23 +67,49 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
     }
 
     const comments = state.allComments;
-    const body = buildReviewComment(state, comments, totalDurationMs);
+    const reviewMarker = `<!-- pullrabbit-review:${state.reviewSessionId} -->`;
+    const body = `${buildReviewComment(state, comments, totalDurationMs)}\n\n${reviewMarker}`;
 
     try {
+      let updatedPersistedComment = false;
       if (loadingCommentId) {
-        await octokit.rest.issues.updateComment({
-          owner: state.owner,
-          repo: state.repoName,
-          comment_id: Number(loadingCommentId),
-          body,
-        });
-      } else {
-        await octokit.rest.issues.createComment({
+        try {
+          await octokit.rest.issues.updateComment({
+            owner: state.owner,
+            repo: state.repoName,
+            comment_id: Number(loadingCommentId),
+            body,
+          });
+          updatedPersistedComment = true;
+        } catch (error) {
+          console.warn("Persisted review comment update failed; using marker lookup:", error);
+        }
+      }
+
+      if (!updatedPersistedComment) {
+        const { data: existingComments } = await octokit.rest.issues.listComments({
           owner: state.owner,
           repo: state.repoName,
           issue_number: state.prNumber,
-          body,
+          per_page: 100,
         });
+        const existingReviewComment = existingComments.find((comment) => comment.body?.includes(reviewMarker));
+
+        if (existingReviewComment) {
+          await octokit.rest.issues.updateComment({
+            owner: state.owner,
+            repo: state.repoName,
+            comment_id: existingReviewComment.id,
+            body,
+          });
+        } else {
+          await octokit.rest.issues.createComment({
+            owner: state.owner,
+            repo: state.repoName,
+            issue_number: state.prNumber,
+            body,
+          });
+        }
       }
     } catch (error) {
       throw new Error(`GITHUB_COMMENT_FAILED: ${error instanceof Error ? error.message : String(error)}`);

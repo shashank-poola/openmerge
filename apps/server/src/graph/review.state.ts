@@ -24,6 +24,10 @@ export const PRReviewState = Annotation.Root({
         value: (_prev, next) => next,
         default: () => null,
     }),
+    leaseId: Annotation<string | null>({
+        value: (_prev, next) => next,
+        default: () => null,
+    }),
     workerId: Annotation<string | null>({
         value: (_prev, next) => next,
         default: () => null,

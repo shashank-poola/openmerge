@@ -26,6 +26,7 @@ export type InstallationPayload = {
 };
 
 type RawWebhookRequest = Request & { rawBody?: Buffer };
+export type WebhookDeliveryClaim = { deliveryId: string; receivedAt: Date };
 type InstallationModel = {
     updateMany: (args: {
         where: { githubInstallationId: bigint };
@@ -42,8 +43,8 @@ type PullRequestDeps = {
 
 export type WebhookHandlerDeps = {
     verify: (payload: string, signature: string) => Promise<boolean>;
-    recordDelivery: (deliveryId: string, eventName: string) => Promise<boolean>;
-    updateDelivery: (deliveryId: string, status: 'PROCESSED' | 'IGNORED' | 'FAILED', errorMessage?: string) => Promise<void>;
+    recordDelivery: (deliveryId: string, eventName: string) => Promise<WebhookDeliveryClaim | null>;
+    updateDelivery: (claim: WebhookDeliveryClaim, status: 'PROCESSED' | 'IGNORED' | 'FAILED', errorMessage?: string) => Promise<void>;
     handleInstallationEvent: typeof handleInstallationEvent;
     handlePullRequestEvent: typeof handlePullRequestEvent;
 };
@@ -58,46 +59,56 @@ export const createInstallationOctokit = (installationId: number) =>
         },
     });
 
-async function recordWebhookDelivery(deliveryId: string, eventName: string): Promise<boolean> {
+async function recordWebhookDelivery(
+    deliveryId: string,
+    eventName: string,
+): Promise<WebhookDeliveryClaim | null> {
     const existing = await db.webhookDelivery.findUnique({ where: { deliveryId } });
     const staleBefore = new Date(Date.now() - WEBHOOK_RECEIVED_STALE_MS);
+    const buildClaim = (receivedAt: Date): WebhookDeliveryClaim => ({ deliveryId, receivedAt });
 
     if (existing?.status === 'FAILED') {
+        const receivedAt = new Date();
         const reclaimed = await db.webhookDelivery.updateMany({
             where: { deliveryId, status: 'FAILED' },
-            data: { status: 'RECEIVED', receivedAt: new Date(), errorMessage: null, processedAt: null },
+            data: { status: 'RECEIVED', receivedAt, errorMessage: null, processedAt: null },
         });
-        return reclaimed.count > 0;
+        return reclaimed.count > 0 ? buildClaim(receivedAt) : null;
     }
 
     if (existing?.status === 'RECEIVED' && existing.receivedAt < staleBefore) {
+        const receivedAt = new Date();
         const reclaimed = await db.webhookDelivery.updateMany({
             where: { deliveryId, status: 'RECEIVED', receivedAt: { lt: staleBefore } },
-            data: { status: 'RECEIVED', receivedAt: new Date(), errorMessage: null, processedAt: null },
+            data: { status: 'RECEIVED', receivedAt, errorMessage: null, processedAt: null },
         });
-        return reclaimed.count > 0;
+        return reclaimed.count > 0 ? buildClaim(receivedAt) : null;
     }
-    if (existing) return false;
+    if (existing) return null;
 
     try {
-        await db.webhookDelivery.create({
+        const delivery = await db.webhookDelivery.create({
             data: { deliveryId, eventName, status: 'RECEIVED' },
         });
-        return true;
+        return buildClaim(delivery.receivedAt);
     } catch (error) {
         const concurrentDelivery = await db.webhookDelivery.findUnique({ where: { deliveryId } });
-        if (concurrentDelivery) return false;
+        if (concurrentDelivery) return null;
         throw error;
     }
 }
 
 async function updateWebhookDelivery(
-    deliveryId: string,
+    claim: WebhookDeliveryClaim,
     status: 'PROCESSED' | 'IGNORED' | 'FAILED',
     errorMessage?: string,
 ): Promise<void> {
     await db.webhookDelivery.updateMany({
-        where: { deliveryId },
+        where: {
+            deliveryId: claim.deliveryId,
+            status: 'RECEIVED',
+            receivedAt: claim.receivedAt,
+        },
         data: {
             status,
             ...(errorMessage ? { errorMessage } : {}),
@@ -138,33 +149,33 @@ export const handleWebhookRequest = async (
         return res.status(401).json({ success: false, error: 'INVALID_SIGNATURE' });
     }
 
-    let isNewDelivery: boolean;
+    let deliveryClaim: WebhookDeliveryClaim | null;
     try {
-        isNewDelivery = await deps.recordDelivery(deliveryId, event);
+        deliveryClaim = await deps.recordDelivery(deliveryId, event);
     } catch (error) {
         console.error('Webhook delivery persistence failed:', error);
         return res.status(503).json({ success: false, error: 'WEBHOOK_STORAGE_UNAVAILABLE' });
     }
 
-    if (!isNewDelivery) {
+    if (!deliveryClaim) {
         return res.status(200).json({ success: true, duplicate: true });
     }
 
     try {
         if (event === 'installation') {
             await deps.handleInstallationEvent(req.body as InstallationPayload);
-            await deps.updateDelivery(deliveryId, 'PROCESSED');
+            await deps.updateDelivery(deliveryClaim, 'PROCESSED');
         } else if (event === 'pull_request') {
             await deps.handlePullRequestEvent(req.body as PullRequestPayload);
-            await deps.updateDelivery(deliveryId, 'PROCESSED');
+            await deps.updateDelivery(deliveryClaim, 'PROCESSED');
         } else {
-            await deps.updateDelivery(deliveryId, 'IGNORED');
+            await deps.updateDelivery(deliveryClaim, 'IGNORED');
         }
 
         return res.status(200).json({ success: true });
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        await deps.updateDelivery(deliveryId, 'FAILED', message).catch(() => undefined);
+        await deps.updateDelivery(deliveryClaim, 'FAILED', message).catch(() => undefined);
         console.error('Webhook processing failed:', error);
         return res.status(500).json({ success: false, error: 'WEBHOOK_PROCESSING_FAILED' });
     }
@@ -215,25 +226,10 @@ export async function handlePullRequestEvent(
     const reviewKey = `${repo.id}:${prNumber}:${headSha}`;
 
     let session = await deps.db.reviewSession.findUnique({ where: { reviewKey } });
-    let shouldQueue = false;
 
-    if (session && hasActiveReviewWork(session)) {
-        return;
-    }
+    if (session && hasActiveReviewWork(session)) return;
 
-    if (session) {
-        session = await deps.db.reviewSession.update({
-            where: { id: session.id },
-            data: {
-                status: 'QUEUED',
-                jobId: null,
-                errorMessage: null,
-                lastErrorCode: null,
-                completedAt: null,
-            },
-        });
-        shouldQueue = true;
-    } else {
+    if (!session) {
         try {
             session = await deps.db.reviewSession.create({
                 data: {
@@ -245,26 +241,37 @@ export async function handlePullRequestEvent(
                     status: 'QUEUED',
                 },
             });
-            shouldQueue = true;
         } catch (error) {
             const concurrentSession = await deps.db.reviewSession.findUnique({ where: { reviewKey } });
             if (!concurrentSession) throw error;
             if (hasActiveReviewWork(concurrentSession)) return;
-            session = await deps.db.reviewSession.update({
-                where: { id: concurrentSession.id },
-                data: {
-                    status: 'QUEUED',
-                    jobId: null,
-                    errorMessage: null,
-                    lastErrorCode: null,
-                    completedAt: null,
-                },
-            });
-            shouldQueue = true;
+            session = concurrentSession;
         }
     }
 
-    if (!shouldQueue || !session) return;
+    if (!session) return;
+
+    const attempt = session.attemptCount + 1;
+    const jobId = buildReviewJobId(session.id, attempt);
+    const schedulingClaim = await deps.db.reviewSession.updateMany({
+        where: {
+            id: session.id,
+            OR: [
+                { status: 'FAILED' },
+                { status: { in: ['QUEUED', 'RETRYING'] }, jobId: null },
+            ],
+        },
+        data: {
+            status: 'QUEUED',
+            jobId,
+            leaseId: null,
+            errorMessage: null,
+            lastErrorCode: null,
+            completedAt: null,
+        },
+    });
+
+    if (schedulingClaim.count === 0) return;
 
     let jobPublished = false;
 
@@ -302,8 +309,6 @@ export async function handlePullRequestEvent(
             });
         }
 
-        const attempt = session.attemptCount + 1;
-        const jobId = buildReviewJobId(session.id, attempt);
         const jobData: ReviewJobData = {
             reviewSessionId: session.id,
             reviewKey,
@@ -318,21 +323,15 @@ export async function handlePullRequestEvent(
 
         await deps.reviewQueue.add('review', jobData, { jobId });
         jobPublished = true;
-        await deps.db.reviewSession.update({
-            where: { id: session.id },
-            data: { jobId },
-        });
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         if (!jobPublished) {
             await deps.db.reviewSession.updateMany({
-                where: {
-                    id: session.id,
-                    status: { in: ['QUEUED', 'RETRYING'] },
-                    jobId: null,
-                },
+                where: { id: session.id, status: 'QUEUED', jobId },
                 data: {
                     status: 'RETRYING',
+                    jobId: null,
+                    leaseId: null,
                     lastErrorCode: 'QUEUE_PUBLISH_FAILED',
                     errorMessage: message,
                 },

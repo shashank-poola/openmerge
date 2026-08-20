@@ -1,11 +1,11 @@
 import { db } from "@repo/database";
 import {
   buildReviewJobId,
+  MAX_REVIEW_ATTEMPTS,
   reviewQueue,
   type ReviewJobData,
 } from "../../server/src/queue/review.queue";
 import {
-  MAX_REVIEW_ATTEMPTS,
   REVIEW_RECOVERY_INTERVAL_MS,
   REVIEW_STALE_AFTER_MS,
 } from "./review.constants";
@@ -48,6 +48,7 @@ export async function recoverReviewSessions(
     data: {
       status: "RETRYING",
       jobId: null,
+      leaseId: null,
       workerId: null,
       heartbeatAt: null,
       lastErrorCode: "WORKER_HEARTBEAT_TIMEOUT",
@@ -88,7 +89,7 @@ export async function recoverReviewSessions(
       continue;
     }
 
-    let attempt = session.attemptCount + 1;
+    const attempt = session.attemptCount + 1;
     if (session.jobId) {
       const existingJob = await deps.reviewQueue.getJob(session.jobId);
       if (existingJob) {
@@ -100,15 +101,14 @@ export async function recoverReviewSessions(
           || state === "waiting-children";
         if (isLive) continue;
 
-        attempt += 1;
         await deps.db.reviewSession.updateMany({
           where: { id: session.id, jobId: session.jobId },
-          data: { jobId: null, attemptCount: { set: attempt - 1 } },
+          data: { jobId: null, leaseId: null },
         });
       } else {
         await deps.db.reviewSession.updateMany({
           where: { id: session.id, jobId: session.jobId },
-          data: { jobId: null },
+          data: { jobId: null, leaseId: null },
         });
       }
     }
@@ -130,7 +130,7 @@ export async function recoverReviewSessions(
       await deps.reviewQueue.add("review", jobData, { jobId });
       await deps.db.reviewSession.updateMany({
         where: { id: session.id, jobId: null },
-        data: { jobId },
+        data: { jobId, leaseId: null },
       });
       console.log(`[worker] recovered review session ${session.id}`);
     } catch (error) {

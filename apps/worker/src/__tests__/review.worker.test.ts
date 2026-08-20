@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import type { Job } from "bullmq";
-import type { ReviewJobData } from "../../../server/src/queue/review.queue";
+import { MAX_REVIEW_ATTEMPTS, type ReviewJobData } from "../../../server/src/queue/review.queue";
 import { processReviewJob } from "../review.worker";
 import { recoverReviewSessions } from "../review.recovery";
 
@@ -23,11 +23,20 @@ type RecoverySessionFixture = {
   };
 };
 
-const reviewGraphInvokeMock = mock(async () => ({
-  error: null as string | null,
-  changedFiles: ["src/index.ts"],
-  allComments: [{ filePath: "src/index.ts" }],
-}));
+type ReviewGraphTestInput = { leaseId: string };
+type ReviewGraphTestResult = {
+  error: string | null;
+  changedFiles: string[];
+  allComments: Array<{ filePath: string }>;
+};
+
+const reviewGraphInvokeMock = mock<(input: ReviewGraphTestInput) => Promise<ReviewGraphTestResult>>(
+  async (_input) => ({
+    error: null,
+    changedFiles: ["src/index.ts"],
+    allComments: [{ filePath: "src/index.ts" }],
+  }),
+);
 const sessionUpdateManyMock = mock(async () => ({ count: 1 }));
 const sessionFindUniqueMock = mock(async () => ({
   status: "COMPLETED" as const,
@@ -59,7 +68,7 @@ function createJob(overrides: Partial<Job<ReviewJobData>> = {}) {
     id: "review:session-1:attempt:1",
     data: jobData,
     attemptsMade: 0,
-    opts: { attempts: 3 },
+    opts: { attempts: MAX_REVIEW_ATTEMPTS },
     ...overrides,
   } as unknown as Job<ReviewJobData>;
 }
@@ -175,7 +184,9 @@ describe("processReviewJob", () => {
   });
 
   test("records a timeout as a retryable review failure", async () => {
-    reviewGraphInvokeMock.mockImplementationOnce(() => new Promise(() => undefined));
+    reviewGraphInvokeMock.mockImplementationOnce(
+      () => new Promise<ReviewGraphTestResult>(() => undefined),
+    );
 
     await expect(processReviewJob(
       createJob(),
@@ -190,16 +201,30 @@ describe("processReviewJob", () => {
     }));
   });
 
+  test("uses a new ownership lease for every BullMQ execution", async () => {
+    reviewGraphInvokeMock.mockRejectedValueOnce(new Error("first attempt failed"));
+
+    await expect(processReviewJob(createJob(), createDeps())).rejects.toThrow("first attempt failed");
+    await processReviewJob(createJob({ attemptsMade: 1 }), createDeps());
+
+    const firstLease = (reviewGraphInvokeMock.mock.calls[0]?.[0] as { leaseId: string }).leaseId;
+    const secondLease = (reviewGraphInvokeMock.mock.calls[1]?.[0] as { leaseId: string }).leaseId;
+    expect(firstLease).toContain(":lease:");
+    expect(secondLease).toContain(":lease:");
+    expect(secondLease).not.toBe(firstLease);
+  });
+
   test("marks a terminal failure when the retry limit is reached", async () => {
     reviewGraphInvokeMock.mockRejectedValueOnce(new Error("provider failed"));
+    const terminalJobId = `review:session-1:attempt:${MAX_REVIEW_ATTEMPTS}`;
 
     await expect(processReviewJob(
-      createJob({ attemptsMade: 2, id: "review:session-1:attempt:3" }),
+      createJob({ attemptsMade: MAX_REVIEW_ATTEMPTS - 1, id: terminalJobId }),
       createDeps(),
     )).rejects.toThrow("provider failed");
 
     expect(sessionUpdateManyMock).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ jobId: "review:session-1:attempt:3" }),
+      where: expect.objectContaining({ jobId: terminalJobId }),
       data: expect.objectContaining({
         status: "FAILED",
         lastErrorCode: "REVIEW_PROCESSING_FAILED",
@@ -209,6 +234,42 @@ describe("processReviewJob", () => {
 });
 
 describe("recoverReviewSessions", () => {
+  test("requeues a terminal queue job using the next session attempt", async () => {
+    sessionFindManyMock.mockResolvedValueOnce([{
+      id: "session-2",
+      reviewKey: "repo-2:7:sha-2",
+      repositoryId: "repo-2",
+      prNumber: 7,
+      headSha: "sha-2",
+      baseBranch: "main",
+      attemptCount: 1,
+      jobId: "review:session-2:attempt:1",
+      repository: {
+        id: "repo-2",
+        owner: "octocat",
+        name: "second-repo",
+        isActive: true,
+        autoReviewEnabled: true,
+        installation: { githubInstallationId: 456n, status: "ACTIVE" },
+      },
+    }]);
+    queueGetJobMock.mockResolvedValueOnce({
+      getState: async () => "completed",
+    } as never);
+
+    await recoverReviewSessions(createDeps());
+
+    expect(sessionUpdateManyMock).toHaveBeenCalledWith({
+      where: { id: "session-2", jobId: "review:session-2:attempt:1" },
+      data: { jobId: null, leaseId: null },
+    });
+    expect(queueAddMock).toHaveBeenCalledWith(
+      "review",
+      expect.objectContaining({ reviewSessionId: "session-2" }),
+      { jobId: "review:session-2:attempt:2" },
+    );
+  });
+
   test("requeues queued sessions that do not have a live job", async () => {
     sessionFindManyMock.mockResolvedValueOnce([{
       id: "session-2",

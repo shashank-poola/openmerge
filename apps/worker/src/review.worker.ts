@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Job } from "bullmq";
 import { db } from "@repo/database";
 import { reviewGraph } from "../../server/src/graph/review.graph";
@@ -61,7 +62,8 @@ function withTimeout<T>(
 async function claimReviewSession(
   job: Job<ReviewJobData>,
   deps: ReviewWorkerDeps,
-  jobId: string,
+  queueJobId: string,
+  leaseId: string,
 ): Promise<boolean> {
   const now = deps.now();
   const claim = await deps.db.reviewSession.updateMany({
@@ -75,7 +77,8 @@ async function claimReviewSession(
       startedAt: now,
       heartbeatAt: now,
       workerId: deps.workerId,
-      jobId,
+      jobId: queueJobId,
+      leaseId,
       errorMessage: null,
       lastErrorCode: null,
       completedAt: null,
@@ -102,6 +105,7 @@ async function claimReviewSession(
     data: {
       status: "RETRYING",
       jobId: null,
+      leaseId: null,
       workerId: null,
       heartbeatAt: null,
       lastErrorCode: "WORKER_HEARTBEAT_TIMEOUT",
@@ -122,7 +126,8 @@ async function claimReviewSession(
       startedAt: now,
       heartbeatAt: now,
       workerId: deps.workerId,
-      jobId,
+      jobId: queueJobId,
+      leaseId,
       errorMessage: null,
       lastErrorCode: null,
       completedAt: null,
@@ -136,8 +141,9 @@ export async function processReviewJob(
   job: Job<ReviewJobData>,
   deps: ReviewWorkerDeps = defaultDeps,
 ): Promise<void> {
-  const jobId = String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1));
-  const claimed = await claimReviewSession(job, deps, jobId);
+  const queueJobId = String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1));
+  const leaseId = `${queueJobId}:lease:${randomUUID()}`;
+  const claimed = await claimReviewSession(job, deps, queueJobId, leaseId);
   if (!claimed) return;
 
   const heartbeat = setInterval(() => {
@@ -146,7 +152,8 @@ export async function processReviewJob(
         id: job.data.reviewSessionId,
         status: "RUNNING",
         workerId: deps.workerId,
-        jobId,
+        jobId: queueJobId,
+        leaseId,
       },
       data: { heartbeatAt: deps.now() },
     }).catch((error) => {
@@ -161,7 +168,8 @@ export async function processReviewJob(
       (signal) => deps.reviewGraph.invoke({
         reviewSessionId: job.data.reviewSessionId,
         repositoryId: job.data.repositoryId,
-        jobId,
+        jobId: queueJobId,
+        leaseId,
         workerId: deps.workerId,
         githubInstallationId: job.data.githubInstallationId,
         prNumber: job.data.prNumber,
@@ -188,7 +196,8 @@ export async function processReviewJob(
         id: job.data.reviewSessionId,
         status: "RUNNING",
         workerId: deps.workerId,
-        jobId,
+        jobId: queueJobId,
+        leaseId,
       },
       data: {
         status: "COMPLETED",
@@ -215,7 +224,8 @@ export async function processReviewJob(
         id: job.data.reviewSessionId,
         status: "RUNNING",
         workerId: deps.workerId,
-        jobId,
+        jobId: queueJobId,
+        leaseId,
       },
       data: {
         status: willRetry ? "RETRYING" : "FAILED",

@@ -145,6 +145,7 @@ model ReviewSession {
   headSha                String?
   reviewKey              String?       @unique
   jobId                  String?       @unique
+  leaseId                String?       @unique
   baseBranch             String        @default("main")
   status                 ReviewStatus  @default(QUEUED)
   attemptCount           Int           @default(0)

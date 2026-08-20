@@ -55,7 +55,7 @@ const buildSummaryLine = (fileCount: number, comments: AgentComment[]): string =
   const files = plural(fileCount, "file");
   if (comments.length === 0) return `Reviewed **${files}** — no issues found.`;
   const blocking = countBlocking(comments);
-  const blockingPart = blocking > 0 ? ` · **${plural(blocking, "blocking")}**` : "";
+  const blockingPart = blocking > 0 ? ` · **${blocking} blocking**` : "";
   return `Reviewed **${files}** · **${plural(comments.length, "issue")}**${blockingPart}`;
 };
 
@@ -72,7 +72,7 @@ const buildDescription = (comments: AgentComment[]): string => {
 
 const buildSectionIntro = (singular: string, items: AgentComment[]): string => {
   const blocking = countBlocking(items);
-  const blockingNote = blocking > 0 ? `, **${plural(blocking, "blocking")}**` : "";
+  const blockingNote = blocking > 0 ? `, **${blocking} blocking**` : "";
   const preview = endWithPeriod(clip(firstSentence(items[0]?.body ?? ""), 90));
   return `Found **${plural(items.length, singular)}**${blockingNote}. ${preview}`;
 };

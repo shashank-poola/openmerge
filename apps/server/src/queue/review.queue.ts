@@ -15,6 +15,8 @@ export type ReviewJobData = {
 export const buildReviewJobId = (reviewSessionId: string, attempt: number) =>
     `review:${reviewSessionId}:attempt:${attempt}`;
 
+export const MAX_REVIEW_ATTEMPTS = 10;
+
 const parseRedisUrl = (url: string) => {
     const parsed = new URL(url);
     if (parsed.protocol !== "redis:" && parsed.protocol !== "rediss:") {
@@ -40,7 +42,7 @@ const connection = parseRedisUrl(redisUrl);
 export const reviewQueue = new Queue<ReviewJobData>("github_pr_review", {
     connection,
     defaultJobOptions: {
-        attempts: 3,
+        attempts: MAX_REVIEW_ATTEMPTS,
         backoff: { type: "exponential", delay: 5_000 },
         removeOnComplete: 100,
         removeOnFail: { count: 200, age: 7 * 24 * 60 * 60 },
