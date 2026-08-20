@@ -6,10 +6,13 @@ import {
   reviewQueue,
   type ReviewJobData,
 } from "../../server/src/queue/review.queue";
+import {
+  REVIEW_HEARTBEAT_INTERVAL_MS,
+  REVIEW_STALE_AFTER_MS,
+  REVIEW_TIMEOUT_MS,
+} from "./review.constants";
 
-export const REVIEW_TIMEOUT_MS = 15 * 60 * 1000;
-export const REVIEW_STALE_AFTER_MS = REVIEW_TIMEOUT_MS + 60 * 1000;
-export const REVIEW_HEARTBEAT_INTERVAL_MS = 15 * 1000;
+export { REVIEW_HEARTBEAT_INTERVAL_MS, REVIEW_STALE_AFTER_MS, REVIEW_TIMEOUT_MS } from "./review.constants";
 
 const workerId = process.env.HOSTNAME ?? `worker-${process.pid}`;
 
@@ -33,14 +36,25 @@ const defaultDeps: ReviewWorkerDeps = {
   now: () => new Date(),
 };
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+function withTimeout<T>(
+  task: (signal: AbortSignal) => Promise<T>,
+  timeoutMs: number,
+  message: string,
+): Promise<T> {
+  const controller = new AbortController();
   let timeout: ReturnType<typeof setTimeout>;
 
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timeout = setTimeout(() => reject(new Error(message)), timeoutMs);
+    timeout = setTimeout(() => {
+      controller.abort(new Error(message));
+      reject(new Error(message));
+    }, timeoutMs);
   });
 
-  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeout));
+  return Promise.race([task(controller.signal), timeoutPromise]).finally(() => {
+    clearTimeout(timeout);
+    controller.abort();
+  });
 }
 
 async function claimReviewSession(
@@ -48,6 +62,7 @@ async function claimReviewSession(
   deps: ReviewWorkerDeps,
 ): Promise<boolean> {
   const now = deps.now();
+  const jobId = String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1));
   const claim = await deps.db.reviewSession.updateMany({
     where: {
       id: job.data.reviewSessionId,
@@ -59,6 +74,7 @@ async function claimReviewSession(
       startedAt: now,
       heartbeatAt: now,
       workerId: deps.workerId,
+      jobId,
       errorMessage: null,
       lastErrorCode: null,
       completedAt: null,
@@ -105,6 +121,7 @@ async function claimReviewSession(
       startedAt: now,
       heartbeatAt: now,
       workerId: deps.workerId,
+      jobId,
       errorMessage: null,
       lastErrorCode: null,
       completedAt: null,
@@ -127,6 +144,7 @@ export async function processReviewJob(
         id: job.data.reviewSessionId,
         status: "RUNNING",
         workerId: deps.workerId,
+        jobId: String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1)),
       },
       data: { heartbeatAt: deps.now() },
     }).catch((error) => {
@@ -138,26 +156,39 @@ export async function processReviewJob(
     console.log(`[worker] processing session ${job.data.reviewSessionId} PR#${job.data.prNumber}`);
 
     const result = await withTimeout(
-      deps.reviewGraph.invoke({
+      (signal) => deps.reviewGraph.invoke({
         reviewSessionId: job.data.reviewSessionId,
         repositoryId: job.data.repositoryId,
+        jobId: String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1)),
+        workerId: deps.workerId,
         githubInstallationId: job.data.githubInstallationId,
         prNumber: job.data.prNumber,
         headSha: job.data.headSha,
         baseBranch: job.data.baseBranch,
         owner: job.data.owner,
         repoName: job.data.repoName,
-      }),
+      }, { signal }),
       REVIEW_TIMEOUT_MS,
       "Review processing timed out",
     );
+
+    if (result.error === "REVIEW_OWNERSHIP_LOST") {
+      console.warn(`[worker] ownership lost before posting session ${job.data.reviewSessionId}`);
+      return;
+    }
 
     if (result.error) {
       throw new Error(result.error);
     }
 
-    await deps.db.reviewSession.update({
-      where: { id: job.data.reviewSessionId },
+    const jobId = String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1));
+    const completed = await deps.db.reviewSession.updateMany({
+      where: {
+        id: job.data.reviewSessionId,
+        status: "RUNNING",
+        workerId: deps.workerId,
+        jobId,
+      },
       data: {
         status: "COMPLETED",
         filesReviewed: result.changedFiles.length,
@@ -169,13 +200,23 @@ export async function processReviewJob(
         errorMessage: null,
       },
     });
+
+    if (completed.count === 0) {
+      console.warn(`[worker] ownership lost before completing session ${job.data.reviewSessionId}`);
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const maxAttempts = job.opts.attempts ?? 1;
     const willRetry = job.attemptsMade + 1 < maxAttempts;
 
-    await deps.db.reviewSession.update({
-      where: { id: job.data.reviewSessionId },
+    const jobId = String(job.id ?? buildReviewJobId(job.data.reviewSessionId, job.attemptsMade + 1));
+    const updated = await deps.db.reviewSession.updateMany({
+      where: {
+        id: job.data.reviewSessionId,
+        status: "RUNNING",
+        workerId: deps.workerId,
+        jobId,
+      },
       data: {
         status: willRetry ? "RETRYING" : "FAILED",
         errorMessage: message,
@@ -186,81 +227,12 @@ export async function processReviewJob(
       },
     });
 
+    if (updated.count === 0) {
+      console.warn(`[worker] ownership lost while recording failure for session ${job.data.reviewSessionId}`);
+    }
+
     throw error;
   } finally {
     clearInterval(heartbeat);
-  }
-}
-
-export async function recoverReviewSessions(
-  deps: Pick<ReviewWorkerDeps, "db" | "reviewQueue"> = defaultDeps,
-): Promise<void> {
-  const staleBefore = new Date(Date.now() - REVIEW_STALE_AFTER_MS);
-
-  await deps.db.reviewSession.updateMany({
-    where: {
-      status: "RUNNING",
-      heartbeatAt: { lt: staleBefore },
-    },
-    data: {
-      status: "RETRYING",
-      jobId: null,
-      workerId: null,
-      heartbeatAt: null,
-      lastErrorCode: "WORKER_HEARTBEAT_TIMEOUT",
-      errorMessage: "Previous worker stopped sending heartbeats",
-    },
-  });
-
-  const sessions = await deps.db.reviewSession.findMany({
-    where: {
-      status: { in: ["QUEUED", "RETRYING"] },
-      headSha: { not: null },
-    },
-    include: {
-      repository: {
-        include: { installation: true },
-      },
-    },
-    take: 50,
-  });
-
-  for (const session of sessions) {
-    if (!session.headSha) continue;
-
-    if (session.jobId) {
-      const existingJob = await deps.reviewQueue.getJob(session.jobId);
-      if (existingJob) continue;
-
-      await deps.db.reviewSession.updateMany({
-        where: { id: session.id, jobId: session.jobId },
-        data: { jobId: null },
-      });
-    }
-
-    const attempt = session.attemptCount + 1;
-    const jobId = buildReviewJobId(session.id, attempt);
-    const jobData: ReviewJobData = {
-      reviewSessionId: session.id,
-      reviewKey: session.reviewKey ?? `${session.repository.id}:${session.prNumber}:${session.headSha}`,
-      repositoryId: session.repository.id,
-      githubInstallationId: session.repository.installation.githubInstallationId.toString(),
-      prNumber: session.prNumber,
-      headSha: session.headSha,
-      baseBranch: session.baseBranch,
-      owner: session.repository.owner,
-      repoName: session.repository.name,
-    };
-
-    try {
-      await deps.reviewQueue.add("review", jobData, { jobId });
-      await deps.db.reviewSession.updateMany({
-        where: { id: session.id, jobId: null },
-        data: { jobId },
-      });
-      console.log(`[worker] recovered review session ${session.id}`);
-    } catch (error) {
-      console.error(`[worker] failed to recover review session ${session.id}:`, error);
-    }
   }
 }

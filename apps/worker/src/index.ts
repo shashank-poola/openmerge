@@ -5,11 +5,8 @@ import { fileURLToPath } from "url";
 import { Worker } from "bullmq";
 import type { ReviewJobData } from "../../server/src/queue/review.queue";
 import { parseRedisUrl } from "./worker.utils";
-import {
-  REVIEW_STALE_AFTER_MS,
-  processReviewJob,
-  recoverReviewSessions,
-} from "./review.worker";
+import { REVIEW_STALE_AFTER_MS, processReviewJob } from "./review.worker";
+import { recoverReviewSessions } from "./review.recovery";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPaths = [

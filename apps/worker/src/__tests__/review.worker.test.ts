@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import type { Job } from "bullmq";
 import type { ReviewJobData } from "../../../server/src/queue/review.queue";
-import { processReviewJob, recoverReviewSessions } from "../review.worker";
+import { processReviewJob } from "../review.worker";
+import { recoverReviewSessions } from "../review.recovery";
 
 type RecoverySessionFixture = {
   id: string;
@@ -16,7 +17,9 @@ type RecoverySessionFixture = {
     id: string;
     owner: string;
     name: string;
-    installation: { githubInstallationId: bigint };
+    isActive: boolean;
+    autoReviewEnabled: boolean;
+    installation: { githubInstallationId: bigint; status: "ACTIVE" | "SUSPENDED" | "REMOVED" };
   };
 };
 
@@ -107,8 +110,8 @@ describe("processReviewJob", () => {
       where: { id: "session-1", status: { in: ["QUEUED", "RETRYING"] } },
       data: expect.objectContaining({ status: "RUNNING", workerId: "test-worker" }),
     }));
-    expect(sessionUpdateMock).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: "session-1" },
+    expect(sessionUpdateManyMock).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: "session-1", status: "RUNNING", workerId: "test-worker" }),
       data: expect.objectContaining({ status: "COMPLETED", filesReviewed: 1, totalComments: 1 }),
     }));
   });
@@ -118,8 +121,8 @@ describe("processReviewJob", () => {
 
     await expect(processReviewJob(createJob(), createDeps())).rejects.toThrow("provider timeout");
 
-    expect(sessionUpdateMock).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: "session-1" },
+    expect(sessionUpdateManyMock).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: "session-1", status: "RUNNING", workerId: "test-worker" }),
       data: expect.objectContaining({
         status: "RETRYING",
         lastErrorCode: "REVIEW_PROCESSING_FAILED",
@@ -154,7 +157,9 @@ describe("recoverReviewSessions", () => {
         id: "repo-2",
         owner: "octocat",
         name: "second-repo",
-        installation: { githubInstallationId: 456n },
+        isActive: true,
+        autoReviewEnabled: true,
+        installation: { githubInstallationId: 456n, status: "ACTIVE" },
       },
     }]);
 

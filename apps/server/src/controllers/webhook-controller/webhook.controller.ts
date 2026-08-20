@@ -60,15 +60,22 @@ export const createInstallationOctokit = (installationId: number) =>
 
 async function recordWebhookDelivery(deliveryId: string, eventName: string): Promise<boolean> {
     const existing = await db.webhookDelivery.findUnique({ where: { deliveryId } });
-    const isStaleReceived = existing?.status === 'RECEIVED'
-        && Date.now() - existing.receivedAt.getTime() >= WEBHOOK_RECEIVED_STALE_MS;
+    const staleBefore = new Date(Date.now() - WEBHOOK_RECEIVED_STALE_MS);
 
-    if (existing?.status === 'FAILED' || isStaleReceived) {
-        await db.webhookDelivery.update({
-            where: { deliveryId },
+    if (existing?.status === 'FAILED') {
+        const reclaimed = await db.webhookDelivery.updateMany({
+            where: { deliveryId, status: 'FAILED' },
             data: { status: 'RECEIVED', errorMessage: null, processedAt: null },
         });
-        return true;
+        return reclaimed.count > 0;
+    }
+
+    if (existing?.status === 'RECEIVED' && existing.receivedAt < staleBefore) {
+        const reclaimed = await db.webhookDelivery.updateMany({
+            where: { deliveryId, status: 'RECEIVED', receivedAt: { lt: staleBefore } },
+            data: { status: 'RECEIVED', errorMessage: null, processedAt: null },
+        });
+        return reclaimed.count > 0;
     }
     if (existing) return false;
 
@@ -259,6 +266,8 @@ export async function handlePullRequestEvent(
 
     if (!shouldQueue || !session) return;
 
+    let jobPublished = false;
+
     try {
         const installationId = Number(repo.installation.githubInstallationId);
         try {
@@ -301,21 +310,27 @@ export async function handlePullRequestEvent(
         };
 
         await deps.reviewQueue.add('review', jobData, { jobId });
+        jobPublished = true;
         await deps.db.reviewSession.update({
             where: { id: session.id },
             data: { jobId },
         });
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        await deps.db.reviewSession.update({
-            where: { id: session.id },
-            data: {
-                status: 'RETRYING',
-                jobId: null,
-                lastErrorCode: 'QUEUE_PUBLISH_FAILED',
-                errorMessage: message,
-            },
-        });
+        if (!jobPublished) {
+            await deps.db.reviewSession.updateMany({
+                where: {
+                    id: session.id,
+                    status: { in: ['QUEUED', 'RETRYING'] },
+                    jobId: null,
+                },
+                data: {
+                    status: 'RETRYING',
+                    lastErrorCode: 'QUEUE_PUBLISH_FAILED',
+                    errorMessage: message,
+                },
+            });
+        }
         throw error;
     }
 }

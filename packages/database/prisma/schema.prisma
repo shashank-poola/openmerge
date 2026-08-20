@@ -198,6 +198,7 @@ model ReviewComment {
   category        CommentCategory  @default(OTHER)
   suggestion      String?
   githubCommentId BigInt?
+  commentKey      String?          @unique
   createdAt       DateTime         @default(now())
 
   reviewSession   ReviewSession    @relation(fields: [reviewSessionId], references: [id], onDelete: Cascade)
