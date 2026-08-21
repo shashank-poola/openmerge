@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/apps/openmerge"><img src="https://img.shields.io/badge/app-install-black?style=flat-square" alt="Install" /></a>
+  <a href="https://github.com/apps/openmerge-app"><img src="https://img.shields.io/badge/app-install-black?style=flat-square" alt="Install" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT License" /></a>
   <a href="https://bun.sh"><img src="https://img.shields.io/badge/bun-package-f472b6?style=flat-square" alt="Bun" /></a>
   <img src="https://img.shields.io/badge/status-beta-orange?style=flat-square" alt="Status: Beta" />
@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="#">Documentation</a> · <a href="#">Discord</a> · <a href="https://github.com/apps/openmerge">Install the GitHub App →</a>
+  <a href="#">Documentation</a> · <a href="#">Discord</a> · <a href="https://github.com/apps/openmerge-app">Install the GitHub App →</a>
 </p>
 
 ---
@@ -22,7 +22,7 @@
 **Install the GitHub App on your repo and OpenMerge reviews every PR automatically.**
 
 ```
-github.com/apps/openmerge → Install → Select repos → Done
+github.com/apps/openmerge-app → Install → Select repos → Done
 ```
 
 ---
@@ -172,5 +172,5 @@ OpenMerge is in beta. Core review pipeline is functional. Some features (Qdrant 
 <br />
 
 <p align="center">
-  <a href="https://github.com/apps/openmerge">Install OpenMerge on GitHub →</a>
+  <a href="https://github.com/apps/openmerge-app">Install OpenMerge on GitHub →</a>
 </p>

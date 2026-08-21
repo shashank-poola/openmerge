@@ -99,7 +99,7 @@ export function DocsIntroPage() {
           <p className="mb-1 text-[10px] font-bold uppercase text-[#555]">bash</p>
           <code className="text-white"># No CLI install required — install via GitHub Marketplace</code>
           <br />
-          <code className="text-[#81c995]">https://github.com/apps/openmerge/installations/select_target</code>
+          <code className="text-[#81c995]">https://github.com/apps/openmerge-app/installations/select_target</code>
         </div>
 
         <h2 id="configuration" className="mb-3 mt-8 text-[18px] font-bold text-white scroll-mt-16">

@@ -62,7 +62,7 @@ export function AccountScreen() {
                 reviewed — OpenMerge will start posting reviews automatically on every PR.
               </p>
               <a
-                href="https://github.com/apps/openmerge/installations/select_target"
+                href="https://github.com/apps/openmerge-app/installations/select_target"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex h-9 items-center gap-2 bg-white px-5 text-[12px]
