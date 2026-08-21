@@ -35,7 +35,15 @@ enum PlanName {
 enum ReviewStatus {
   QUEUED
   RUNNING
+  RETRYING
   COMPLETED
+  FAILED
+}
+
+enum WebhookDeliveryStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
   FAILED
 }
 
@@ -135,14 +143,22 @@ model ReviewSession {
   repositoryId           String
   prNumber               Int
   headSha                String?
+  reviewKey              String?       @unique
+  jobId                  String?       @unique
+  leaseId                String?       @unique
   baseBranch             String        @default("main")
   status                 ReviewStatus  @default(QUEUED)
+  attemptCount           Int           @default(0)
   summary                String?
   filesReviewed          Int           @default(0)
   totalComments          Int           @default(0)
   githubReviewId         BigInt?
   githubLoadingCommentId BigInt?
   errorMessage           String?
+  lastErrorCode          String?
+  workerId               String?
+  startedAt              DateTime?
+  heartbeatAt            DateTime?
   createdAt              DateTime      @default(now())
   updatedAt              DateTime      @updatedAt
   completedAt            DateTime?
@@ -153,6 +169,20 @@ model ReviewSession {
   @@index([repositoryId])
   @@index([prNumber])
   @@index([status])
+  @@index([status, heartbeatAt])
+}
+
+model WebhookDelivery {
+  id          String                 @id @default(uuid())
+  deliveryId  String                 @unique
+  eventName   String
+  status      WebhookDeliveryStatus  @default(RECEIVED)
+  errorMessage String?
+  receivedAt  DateTime               @default(now())
+  processedAt DateTime?
+
+  @@index([status])
+  @@index([receivedAt])
 }
 
 model ReviewComment {
@@ -169,6 +199,7 @@ model ReviewComment {
   category        CommentCategory  @default(OTHER)
   suggestion      String?
   githubCommentId BigInt?
+  commentKey      String?          @unique
   createdAt       DateTime         @default(now())
 
   reviewSession   ReviewSession    @relation(fields: [reviewSessionId], references: [id], onDelete: Cascade)

@@ -20,6 +20,18 @@ export type {
 export const PRReviewState = Annotation.Root({
     reviewSessionId: Annotation<string>,
     repositoryId: Annotation<string>,
+    jobId: Annotation<string | null>({
+        value: (_prev, next) => next,
+        default: () => null,
+    }),
+    leaseId: Annotation<string | null>({
+        value: (_prev, next) => next,
+        default: () => null,
+    }),
+    workerId: Annotation<string | null>({
+        value: (_prev, next) => next,
+        default: () => null,
+    }),
     githubInstallationId: Annotation<string>,
     prNumber: Annotation<number>,
     headSha: Annotation<string>,

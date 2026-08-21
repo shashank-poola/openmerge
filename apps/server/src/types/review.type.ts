@@ -4,7 +4,7 @@ export const reviewSession = (session: {
     prNumber: number;
     headSha: string | null;
     baseBranch: string;
-    status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+    status: "QUEUED" | "RUNNING" | "RETRYING" | "COMPLETED" | "FAILED";
     summary: string | null;
     filesReviewed: number;
     totalComments: number;

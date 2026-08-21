@@ -27,6 +27,9 @@ export const reviewGraph = graph.compile();
 export type ReviewGraphInput = {
     reviewSessionId: string;
     repositoryId: string;
+    jobId: string;
+    leaseId: string;
+    workerId: string;
     githubInstallationId: string;
     prNumber: number;
     headSha: string;

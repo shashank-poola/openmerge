@@ -5,7 +5,7 @@ export const reviewSessionSchema = z.object({
     prNumber: z.number().int().positive(),
     headSha: z.string().nullable().optional(),
     baseBranch: z.string().default("main"),
-    status: z.enum(["QUEUED", "RUNNING", "COMPLETED", "FAILED"]).default("QUEUED"),
+    status: z.enum(["QUEUED", "RUNNING", "RETRYING", "COMPLETED", "FAILED"]).default("QUEUED"),
     summary: z.string().nullable().optional(),
     filesReviewed: z.number().int().min(0).default(0),
     totalComments: z.number().int().min(0).default(0),
