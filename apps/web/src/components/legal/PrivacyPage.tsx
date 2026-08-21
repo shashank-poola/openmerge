@@ -5,19 +5,19 @@ import { PageShell } from "@/components/layout/PageShell";
 const sections = [
   {
     title: "1. Information We Collect",
-    body: `When you sign in with GitHub, we receive your GitHub username, email address, name, and avatar URL. We store this to identify your account and display it in the dashboard. We also collect installation data: which repositories you have authorized PullRabbit to review.`,
+    body: `When you sign in with GitHub, we receive your GitHub username, email address, name, and avatar URL. We store this to identify your account and display it in the dashboard. We also collect installation data: which repositories you have authorized OpenMerge to review.`,
   },
   {
     title: "2. Code Access",
-    body: `To generate pull request reviews, PullRabbit temporarily reads the diff of each pull request from GitHub via the GitHub API. We do not store your source code. Diff content is processed in memory, passed to the AI agents, and discarded after the review job completes.`,
+    body: `To generate pull request reviews, OpenMerge temporarily reads the diff of each pull request from GitHub via the GitHub API. We do not store your source code. Diff content is processed in memory, passed to the AI agents, and discarded after the review job completes.`,
   },
   {
     title: "3. Review Data",
-    body: `We store review session metadata (PR number, review status, comment count, timestamps) associated with your account. This data is used to power the PullRabbit dashboard. You can delete your account and all associated data at any time from Settings.`,
+    body: `We store review session metadata (PR number, review status, comment count, timestamps) associated with your account. This data is used to power the OpenMerge dashboard. You can delete your account and all associated data at any time from Settings.`,
   },
   {
     title: "4. Third-Party Services",
-    body: `PullRabbit uses the GitHub API to read diffs and post review comments. AI agents may use third-party model APIs (e.g., Google Gemini). Diff excerpts may be sent to these providers solely for the purpose of generating review content. We do not sell your data to third parties.`,
+    body: `OpenMerge uses the GitHub API to read diffs and post review comments. AI agents may use third-party model APIs (e.g., Google Gemini). Diff excerpts may be sent to these providers solely for the purpose of generating review content. We do not sell your data to third parties.`,
   },
   {
     title: "5. Data Security",
@@ -33,7 +33,7 @@ const sections = [
   },
   {
     title: "8. Your Rights",
-    body: `You have the right to access, correct, or delete your personal data. To exercise these rights, contact us at privacy@pullrabbit.dev. We will respond within 30 days.`,
+    body: `You have the right to access, correct, or delete your personal data. To exercise these rights, contact us at privacy@openmerge.xyz. We will respond within 30 days.`,
   },
   {
     title: "9. Changes to This Policy",
@@ -41,7 +41,7 @@ const sections = [
   },
   {
     title: "10. Contact",
-    body: `For privacy-related questions, contact us at privacy@pullrabbit.dev.`,
+    body: `For privacy-related questions, contact us at privacy@openmerge.xyz.`,
   },
 ];
 
@@ -50,7 +50,7 @@ export function PrivacyPage() {
     <PageShell>
       <header className="flex h-14 items-center justify-between border-b border-white/8 px-10 text-[13px]">
         <Link href="/" className="transition-opacity hover:opacity-80">
-          <Image src="/pullrabbit/reclogo.png" alt="PullRabbit" width={110} height={26} className="h-[26px] w-auto" />
+          <Image src="/openmerge/reclogo.png" alt="OpenMerge" width={110} height={26} className="h-[26px] w-auto" />
         </Link>
         <Link href="/" className="text-[#555] hover:text-white">
           ← Back to home

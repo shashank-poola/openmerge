@@ -30,7 +30,7 @@ export const cloneRepo = async (params: {
     headSha: string;
 }): Promise<CloneResult> => {
     const token = await getInstallationToken(params.githubInstallationId);
-    const localPath = await mkdtemp(join(tmpdir(), "pullrabbit-"));
+    const localPath = await mkdtemp(join(tmpdir(), "openmerge-"));
 
     const cloneUrl = `https://x-access-token:${token}@github.com/${params.owner}/${params.repoName}.git`;
 

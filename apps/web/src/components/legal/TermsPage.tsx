@@ -5,15 +5,15 @@ import { PageShell } from "@/components/layout/PageShell";
 const sections = [
   {
     title: "1. Acceptance of Terms",
-    body: `By accessing or using PullRabbit ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. PullRabbit Labs reserves the right to update these terms at any time. Continued use of the Service after changes constitutes acceptance of the updated terms.`,
+    body: `By accessing or using OpenMerge ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. OpenMerge Labs reserves the right to update these terms at any time. Continued use of the Service after changes constitutes acceptance of the updated terms.`,
   },
   {
     title: "2. Description of Service",
-    body: `PullRabbit provides an AI-powered pull request review service that integrates with GitHub via a GitHub App. The Service analyzes code changes and posts automated review comments on pull requests.`,
+    body: `OpenMerge provides an AI-powered pull request review service that integrates with GitHub via a GitHub App. The Service analyzes code changes and posts automated review comments on pull requests.`,
   },
   {
     title: "3. GitHub Integration",
-    body: `To use PullRabbit, you must authorize the PullRabbit GitHub App on your repositories. You grant PullRabbit read access to your code for the purpose of generating automated reviews. PullRabbit does not store your source code beyond what is required to process individual review jobs.`,
+    body: `To use OpenMerge, you must authorize the OpenMerge GitHub App on your repositories. You grant OpenMerge read access to your code for the purpose of generating automated reviews. OpenMerge does not store your source code beyond what is required to process individual review jobs.`,
   },
   {
     title: "4. Acceptable Use",
@@ -21,11 +21,11 @@ const sections = [
   },
   {
     title: "5. Disclaimer of Warranties",
-    body: `The Service is provided "as is" without warranties of any kind. PullRabbit does not guarantee that automated reviews will catch all bugs, security vulnerabilities, or performance issues. AI-generated review comments may contain errors. You are responsible for all code that ships to production.`,
+    body: `The Service is provided "as is" without warranties of any kind. OpenMerge does not guarantee that automated reviews will catch all bugs, security vulnerabilities, or performance issues. AI-generated review comments may contain errors. You are responsible for all code that ships to production.`,
   },
   {
     title: "6. Limitation of Liability",
-    body: `To the maximum extent permitted by law, PullRabbit Labs shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. Our total liability shall not exceed the amount you paid us in the preceding twelve months.`,
+    body: `To the maximum extent permitted by law, OpenMerge Labs shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. Our total liability shall not exceed the amount you paid us in the preceding twelve months.`,
   },
   {
     title: "7. Termination",
@@ -37,7 +37,7 @@ const sections = [
   },
   {
     title: "9. Contact",
-    body: `For questions about these terms, contact us at legal@pullrabbit.dev.`,
+    body: `For questions about these terms, contact us at legal@openmerge.xyz.`,
   },
 ];
 
@@ -46,7 +46,7 @@ export function TermsPage() {
     <PageShell>
       <header className="flex h-14 items-center justify-between border-b border-white/8 px-10 text-[13px]">
         <Link href="/" className="transition-opacity hover:opacity-80">
-          <Image src="/pullrabbit/reclogo.png" alt="PullRabbit" width={160} height={50} className="h-[44px] w-auto" />
+          <Image src="/openmerge/reclogo.png" alt="OpenMerge" width={160} height={50} className="h-[44px] w-auto" />
         </Link>
         <Link href="/" className="text-[#555] hover:text-white">
           ← Back to home

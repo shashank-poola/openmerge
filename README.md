@@ -1,35 +1,35 @@
 <p align="center">
-  <img src="apps/web/public/pullrabbit/logo.png" alt="PullRabbit" width="120" />
+  <img src="apps/web/public/openmerge/logo.png" alt="OpenMerge" width="120" />
 </p>
 
 <p align="center">
-  <a href="https://github.com/apps/pullrabbit"><img src="https://img.shields.io/badge/app-install-black?style=flat-square" alt="Install" /></a>
+  <a href="https://github.com/apps/openmerge-app"><img src="https://img.shields.io/badge/app-install-black?style=flat-square" alt="Install" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT License" /></a>
   <a href="https://bun.sh"><img src="https://img.shields.io/badge/bun-package-f472b6?style=flat-square" alt="Bun" /></a>
   <img src="https://img.shields.io/badge/status-beta-orange?style=flat-square" alt="Status: Beta" />
 </p>
 
 <p align="center">
-  <b>PullRabbit</b> is an AI-powered GitHub PR reviewer that understands your code - not just your diff.
+  <b>OpenMerge</b> is an AI-powered GitHub PR reviewer that understands your code - not just your diff.
 </p>
 
 <p align="center">
-  <a href="#">Documentation</a> · <a href="#">Discord</a> · <a href="https://github.com/apps/pullrabbit">Install the GitHub App →</a>
+  <a href="#">Documentation</a> · <a href="#">Discord</a> · <a href="https://github.com/apps/openmerge-app">Install the GitHub App →</a>
 </p>
 
 ---
 
-**Install the GitHub App on your repo and PullRabbit reviews every PR automatically.**
+**Install the GitHub App on your repo and OpenMerge reviews every PR automatically.**
 
 ```
-github.com/apps/pullrabbit → Install → Select repos → Done
+github.com/apps/openmerge-app → Install → Select repos → Done
 ```
 
 ---
 
-## Why PullRabbit
+## Why OpenMerge
 
-1. Most AI reviewers look at the diff. PullRabbit builds an AST, traces the call graph, runs linters, and fetches import sources, so it understands what the change actually does, not just what lines changed.
+1. Most AI reviewers look at the diff. OpenMerge builds an AST, traces the call graph, runs linters, and fetches import sources, so it understands what the change actually does, not just what lines changed.
 
 2. Three specialist agents run in parallel - code correctness, security, and performance — each with full context. You get focused findings, not a generic wall of text.
 
@@ -39,11 +39,11 @@ github.com/apps/pullrabbit → Install → Select repos → Done
 
 ## How It Works
 
-When a PR is opened, PullRabbit's GitHub App receives a webhook. The review job is queued immediately and a loading comment is posted on the PR so you see instant feedback. The worker then runs the full pipeline:
+When a PR is opened, OpenMerge's GitHub App receives a webhook. The review job is queued immediately and a loading comment is posted on the PR so you see instant feedback. The worker then runs the full pipeline:
 
 ### Context fetching
 
-PullRabbit clones the repo at the PR's head SHA and runs five context helpers in parallel:
+OpenMerge clones the repo at the PR's head SHA and runs five context helpers in parallel:
 
 - **AST analysis** - parses changed files into an abstract syntax tree, extracting functions, classes, and imports
 - **Code graph** - walks the full repo (up to 400 files) to build a call graph: what the changed functions call, and what calls them — revealing blast radius
@@ -65,13 +65,13 @@ Results are deduplicated, ranked by severity (CRITICAL → HIGH → MEDIUM → L
 
 ### Architecture
 
-![PullRabbit Architecture](apps/web/public/pullrabbit/newarch.png)
+![OpenMerge Architecture](apps/web/public/openmerge/newarch.png)
 
 ---
 
 ## How It Compares
 
-|  | **PullRabbit** | CodeRabbit | Greptile | Graphite |
+|  | **OpenMerge** | CodeRabbit | Greptile | Graphite |
 |---|---|---|---|---|
 | AST-based analysis | ✅ | ❌ | ❌ | ❌ |
 | Call graph traversal | ✅ | ❌ | ✅ | ❌ |
@@ -83,13 +83,13 @@ Results are deduplicated, ranked by severity (CRITICAL → HIGH → MEDIUM → L
 | Self-hostable | ✅ | ❌ | ❌ | ❌ |
 | Open source | ✅ | ❌ | ❌ | ❌ |
 
-CodeRabbit reviews the diff. Greptile understands the repo. PullRabbit does both — and runs specialist agents on top.
+CodeRabbit reviews the diff. Greptile understands the repo. OpenMerge does both — and runs specialist agents on top.
 
 ---
 
 ## What This Is Not
 
-PullRabbit is not a replacement for human review. It catches mechanical issues — bugs, security holes, performance regressions - so human reviewers can focus on design, intent, and product decisions. It also won't catch issues that require understanding product requirements or business logic that isn't in the codebase.
+OpenMerge is not a replacement for human review. It catches mechanical issues — bugs, security holes, performance regressions - so human reviewers can focus on design, intent, and product decisions. It also won't catch issues that require understanding product requirements or business logic that isn't in the codebase.
 
 ---
 
@@ -165,12 +165,12 @@ Yes. Clone the repo, run `docker compose up -d` for PostgreSQL and Redis, config
 
 <br/>
 
-PullRabbit is in beta. Core review pipeline is functional. Some features (Qdrant memory, streaming) are still in progress. Use in production at your own discretion.
+OpenMerge is in beta. Core review pipeline is functional. Some features (Qdrant memory, streaming) are still in progress. Use in production at your own discretion.
 
 </details>
 
 <br />
 
 <p align="center">
-  <a href="https://github.com/apps/pullrabbit">Install PullRabbit on GitHub →</a>
+  <a href="https://github.com/apps/openmerge-app">Install OpenMerge on GitHub →</a>
 </p>

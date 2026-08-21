@@ -2,10 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 const footerLinks = [
-  { label: "GitHub", href: "https://github.com/pullrabbit/pullrabbit" },
+  { label: "GitHub", href: "https://github.com/shashank-poola/openmerge" },
   { label: "Docs", href: "/docs" },
-  { label: "PullRabbit", href: "/" },
-  { label: "Install", href: "https://github.com/apps/pull-rabbit/installations/select_target" },
+  { label: "OpenMerge", href: "/" },
+  { label: "Install", href: "https://github.com/apps/openmerge-app/installations/select_target" },
   { label: "X", href: "https://x.com/shashank-poola" },
 ];
 
@@ -29,8 +29,8 @@ export function LandingFooter() {
       <div className="flex flex-wrap items-center justify-between gap-4 px-10 py-5 text-[12px] text-[#444]">
         <Link href="/" className="transition-opacity hover:opacity-70">
           <Image
-            src="/pullrabbit/reclogo.png"
-            alt="PullRabbit"
+            src="/openmerge/reclogo.png"
+            alt="OpenMerge"
             width={160}
             height={50}
             className="h-12 w-auto opacity-50"

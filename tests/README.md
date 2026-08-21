@@ -1,4 +1,4 @@
-# PullRabbit Tests
+# OpenMerge Tests
 
 Tests are organized by test type first, then by product domain.
 

@@ -1,7 +1,7 @@
 const toc = [
   { id: "overview", label: "Overview" },
   { id: "key-capabilities", label: "Key capabilities" },
-  { id: "how-it-works", label: "How PullRabbit Works" },
+  { id: "how-it-works", label: "How OpenMerge Works" },
   { id: "installation", label: "Installation" },
   { id: "configuration", label: "Configuration" },
 ];
@@ -18,7 +18,7 @@ export function DocsIntroPage() {
           Introduction
         </h1>
         <p className="mb-6 text-[#888]">
-          PullRabbit is an AI-powered GitHub PR reviewer. Install it as a GitHub App,
+          OpenMerge is an AI-powered GitHub PR reviewer. Install it as a GitHub App,
           and it automatically reviews every pull request using three specialized agents.
         </p>
 
@@ -26,8 +26,8 @@ export function DocsIntroPage() {
           Overview
         </h2>
         <p className="mb-4 text-[#888]">
-          PullRabbit connects to your GitHub repositories via a GitHub App and reviews
-          pull requests automatically. When a PR is opened, PullRabbit runs security,
+          OpenMerge connects to your GitHub repositories via a GitHub App and reviews
+          pull requests automatically. When a PR is opened, OpenMerge runs security,
           performance, and code quality agents in parallel, then posts inline comments
           directly on the diff — exactly like a senior engineer would.
         </p>
@@ -53,10 +53,10 @@ export function DocsIntroPage() {
         </ul>
 
         <h2 id="how-it-works" className="mb-3 mt-8 text-[18px] font-bold text-white scroll-mt-16">
-          How PullRabbit Works
+          How OpenMerge Works
         </h2>
         <p className="mb-3 text-[#888]">
-          When a pull request is opened or updated, GitHub sends a webhook to PullRabbit.
+          When a pull request is opened or updated, GitHub sends a webhook to OpenMerge.
           The server validates the signature, creates a review job, and queues it for the worker.
         </p>
         <p className="mb-3 text-[#888]">
@@ -76,18 +76,18 @@ export function DocsIntroPage() {
         </ul>
         <p className="mb-4 text-[#888]">
           After all agents complete, findings are aggregated and posted as inline comments
-          on the PR diff via the PullRabbit bot account.
+          on the PR diff via the OpenMerge bot account.
         </p>
 
         <h2 id="installation" className="mb-3 mt-8 text-[18px] font-bold text-white scroll-mt-16">
           Installation
         </h2>
-        <p className="mb-3 text-[#888]">Install the PullRabbit GitHub App in three steps:</p>
+        <p className="mb-3 text-[#888]">Install the OpenMerge GitHub App in three steps:</p>
         <ol className="mb-4 space-y-2 text-[#888]">
           {[
-            "Visit the GitHub Marketplace and install the PullRabbit GitHub App.",
-            "Authorize PullRabbit and select the repositories to review.",
-            "Open a pull request — PullRabbit will post a review automatically.",
+            "Visit the GitHub Marketplace and install the OpenMerge GitHub App.",
+            "Authorize OpenMerge and select the repositories to review.",
+            "Open a pull request — OpenMerge will post a review automatically.",
           ].map((step, i) => (
             <li key={i} className="flex gap-3">
               <span className="shrink-0 font-bold text-white">{i + 1}.</span>
@@ -99,14 +99,14 @@ export function DocsIntroPage() {
           <p className="mb-1 text-[10px] font-bold uppercase text-[#555]">bash</p>
           <code className="text-white"># No CLI install required — install via GitHub Marketplace</code>
           <br />
-          <code className="text-[#81c995]">https://github.com/apps/pull-rabbit/installations/select_target</code>
+          <code className="text-[#81c995]">https://github.com/apps/openmerge-app/installations/select_target</code>
         </div>
 
         <h2 id="configuration" className="mb-3 mt-8 text-[18px] font-bold text-white scroll-mt-16">
           Configuration
         </h2>
         <p className="mb-3 text-[#888]">
-          Add a <code className="rounded border border-white/8 bg-[#1a1818] px-1.5 py-0.5">.pullrabbit.yml</code> file
+          Add a <code className="rounded border border-white/8 bg-[#1a1818] px-1.5 py-0.5">.openmerge.yml</code> file
           to the root of your repository to configure review behavior:
         </p>
         <div className="my-5 border border-white/8 bg-[#0f0d0d] px-5 py-4 text-[12px]">

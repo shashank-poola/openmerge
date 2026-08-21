@@ -33,7 +33,7 @@ export function AccountScreen() {
       <div className="flex min-h-screen flex-col">
         <header className="flex h-14 items-center justify-between border-b border-white/8 px-10">
           <Link href="/" className="transition-opacity hover:opacity-80">
-            <Image src="/pullrabbit/reclogo.png" alt="PullRabbit" width={110} height={26} className="h-6.5 w-auto" />
+            <Image src="/openmerge/reclogo.png" alt="OpenMerge" width={110} height={26} className="h-6.5 w-auto" />
           </Link>
           <button
             type="button"
@@ -58,11 +58,11 @@ export function AccountScreen() {
             </div>
             <div className="px-5 py-5">
               <p className="mb-5 text-[13px] leading-relaxed text-[#777]">
-                Install PullRabbit on your GitHub repositories. Select the repos you want
-                reviewed — PullRabbit will start posting reviews automatically on every PR.
+                Install OpenMerge on your GitHub repositories. Select the repos you want
+                reviewed — OpenMerge will start posting reviews automatically on every PR.
               </p>
               <a
-                href="https://github.com/apps/pull-rabbit/installations/select_target"
+                href="https://github.com/apps/openmerge-app/installations/select_target"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex h-9 items-center gap-2 bg-white px-5 text-[12px]
@@ -83,11 +83,11 @@ export function AccountScreen() {
             </div>
             <div className="px-5 py-5">
               <p className="mb-5 text-[13px] leading-relaxed text-[#777]">
-                Install the PullRabbit CLI to trigger reviews on-demand from your terminal.
+                Install the OpenMerge CLI to trigger reviews on-demand from your terminal.
               </p>
               <div className="flex items-center border border-white/8 bg-[#0f0d0d] px-4 py-3 text-[12px]
                 transition-colors hover:bg-[#111]">
-                <code className="flex-1 text-white">npm install -g pullrabbit</code>
+                <code className="flex-1 text-white">npm install -g openmerge</code>
               </div>
             </div>
           </div>
@@ -105,7 +105,7 @@ export function AccountScreen() {
               {token ? (
                 <div className="flex items-center gap-3 border border-white/8 bg-[#0f0d0d] px-4 py-3 text-[12px]">
                   <code className="flex-1 truncate text-white">
-                    pullrabbit auth --token {token.slice(0, 24)}...
+                    openmerge auth --token {token.slice(0, 24)}...
                   </code>
                   <button
                     type="button"
@@ -126,7 +126,7 @@ export function AccountScreen() {
         </div>
 
         <footer className="flex items-center justify-between border-t border-white/8 px-10 py-4 text-[12px] text-[#444]">
-          <span>©2026 PullRabbit Labs</span>
+          <span>©2026 OpenMerge Labs</span>
           <div className="flex gap-5">
             <Link href="/docs" className="transition-colors hover:text-[#888]">Docs</Link>
             <Link href="/privacy" className="transition-colors hover:text-[#888]">Privacy</Link>

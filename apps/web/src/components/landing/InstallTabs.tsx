@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useClipboard } from "@/hooks/useClipboard";
 
 const tabs = [
-  { id: "npm",  label: "npm",  command: "npm install -g pullrabbit" },
-  { id: "bun",  label: "bun",  command: "bun add -g pullrabbit" },
-  { id: "pnpm", label: "pnpm", command: "pnpm add -g pullrabbit" },
-  { id: "brew", label: "brew", command: "brew install pullrabbit/tap/pullrabbit" },
+  { id: "npm",  label: "npm",  command: "npm install -g openmerge" },
+  { id: "bun",  label: "bun",  command: "bun add -g openmerge" },
+  { id: "pnpm", label: "pnpm", command: "pnpm add -g openmerge" },
+  { id: "brew", label: "brew", command: "brew install openmerge/tap/openmerge" },
 ];
 
 export function InstallTabs() {

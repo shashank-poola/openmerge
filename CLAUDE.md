@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-PullRabbit is an AI-powered GitHub PR reviewer. It installs as a GitHub App, receives webhook events when PRs are opened, queues review jobs, and posts inline comments via a bot account.
+OpenMerge is an AI-powered GitHub PR reviewer. It installs as a GitHub App, receives webhook events when PRs are opened, queues review jobs, and posts inline comments via a bot account.
 
 ## Commands
 

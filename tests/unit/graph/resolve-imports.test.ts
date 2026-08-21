@@ -7,7 +7,7 @@ import { resolveImports } from "../../../apps/server/src/graph/context/resolve-i
 const tempRoots: string[] = [];
 
 async function createRepoFixture() {
-  const root = await mkdtemp(join(tmpdir(), "pullrabbit-imports-"));
+  const root = await mkdtemp(join(tmpdir(), "openmerge-imports-"));
   tempRoots.push(root);
   return root;
 }

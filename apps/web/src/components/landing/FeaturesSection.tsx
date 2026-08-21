@@ -12,9 +12,9 @@ const features = [
 export function FeaturesSection() {
   return (
     <section className="border-t border-white/8 px-10 py-24">
-      <h2 className="mb-8 text-[18px] font-bold text-white">What is PullRabbit?</h2>
+      <h2 className="mb-8 text-[18px] font-bold text-white">What is OpenMerge?</h2>
       <p className="mb-10 max-w-[580px] text-[14px] leading-relaxed text-[#777]">
-        PullRabbit is an open source AI-powered GitHub App that runs parallel review
+        OpenMerge is an open source AI-powered GitHub App that runs parallel review
         agents on every pull request and posts inline comments automatically.
       </p>
 

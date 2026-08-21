@@ -1,14 +1,14 @@
 services:
   postgres:
     image: postgres:16
-    container_name: pullrabbit-postgres
+    container_name: openmerge-postgres
     restart: always
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_USER: pullrabbit
+      POSTGRES_USER: openmerge
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: pullrabbit_db
+      POSTGRES_DB: openmerge_db
       POSTGRES_HOST_AUTH_METHOD: md5
     command: ["postgres", "-c", "password_encryption=md5"]
     volumes:
@@ -16,7 +16,7 @@ services:
 
   redis:
     image: redis:7
-    container_name: pullrabbit-redis
+    container_name: openmerge-redis
     restart: always
     ports:
       - "6379:6379"

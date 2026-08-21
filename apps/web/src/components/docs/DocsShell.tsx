@@ -40,8 +40,8 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-20 flex h-12 items-center justify-between border-b border-white/8 bg-[#131010] px-5">
         <Link href="/" className="transition-opacity hover:opacity-80">
           <Image
-            src="/pullrabbit/reclogo.png"
-            alt="PullRabbit"
+            src="/openmerge/reclogo.png"
+            alt="OpenMerge"
             width={110}
             height={26}
             className="h-[26px] w-auto"
@@ -49,7 +49,7 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
         </Link>
         <div className="flex items-center gap-4 text-[12px] text-[#555]">
           <Link href="/docs" className="hover:text-white">Docs</Link>
-          <Link href="https://github.com/pullrabbit/pullrabbit" className="hover:text-white">GitHub</Link>
+          <Link href="https://github.com/shashank-poola/openmerge" className="hover:text-white">GitHub</Link>
           <Link
             href="/signin"
             className="border border-white/15 px-3 py-1 text-[11px] text-white hover:bg-white hover:text-black"

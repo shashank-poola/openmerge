@@ -45,7 +45,7 @@ describe("authMiddleware", () => {
   });
 
   test("rejects non-Bearer authorization schemes", async () => {
-    const token = signToken("user-1", "dev@pullrabbit.dev");
+    const token = signToken("user-1", "dev@openmerge.xyz");
     const req = createMockRequest({ headers: { authorization: `Basic ${token}` } });
     const res = createMockResponse();
     const nextMock = mock<(deferToNext?: "route" | "router") => void>(() => undefined);
@@ -58,7 +58,7 @@ describe("authMiddleware", () => {
   });
 
   test("accepts signed tokens and attaches auth context", async () => {
-    const token = signToken("user-123", "dev@pullrabbit.dev");
+    const token = signToken("user-123", "dev@openmerge.xyz");
     const req = createMockRequest({ headers: { authorization: `Bearer ${token}` } });
     const res = createMockResponse();
     const nextMock = mock<(deferToNext?: "route" | "router") => void>(() => undefined);
@@ -67,16 +67,16 @@ describe("authMiddleware", () => {
 
     expect(nextMock).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
-    expect(req.user).toMatchObject({ userId: "user-123", email: "dev@pullrabbit.dev" });
+    expect(req.user).toMatchObject({ userId: "user-123", email: "dev@openmerge.xyz" });
     expect(req.userId).toBe("user-123");
   });
 
   test("signToken emits a seven-day JWT with expected claims", () => {
-    const token = signToken("user-123", "dev@pullrabbit.dev");
+    const token = signToken("user-123", "dev@openmerge.xyz");
     const decoded = jwt.verify(token, process.env.SERVER_JWT_SECRET!) as jwt.JwtPayload;
 
     expect(decoded.userId).toBe("user-123");
-    expect(decoded.email).toBe("dev@pullrabbit.dev");
+    expect(decoded.email).toBe("dev@openmerge.xyz");
     expect(decoded.exp! - decoded.iat!).toBe(7 * 24 * 60 * 60);
   });
 });

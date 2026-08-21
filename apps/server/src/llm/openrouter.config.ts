@@ -4,8 +4,8 @@ import { OPENROUTER_DEFAULTS } from "./models/openrouter.models";
 
 const BASE_URL = "https://openrouter.ai/api/v1";
 const HEADERS = {
-    "HTTP-Referer": "https://pullrabbit.com",
-    "X-Title": "PullRabbit",
+    "HTTP-Referer": "https://openmerge.xyz",
+    "X-Title": "OpenMerge",
 };
 
 export const hasOpenRouter = (): boolean => Boolean(env.OPENROUTER_API_KEY);

@@ -7,9 +7,9 @@ describe("repoSchema", () => {
     const parsed = repoSchema.parse({
       installationId: "550e8400-e29b-41d4-a716-446655440000",
       githubRepoId: "123456789012345678",
-      owner: "pullrabbit",
+      owner: "openmerge",
       name: "api",
-      fullName: "pullrabbit/api",
+      fullName: "openmerge/api",
       defaultBranch: "main",
       isPrivate: true,
     });
@@ -23,9 +23,9 @@ describe("repoSchema", () => {
     expect(() => repoSchema.parse({
       installationId: "not-a-uuid",
       githubRepoId: 1,
-      owner: "pullrabbit",
+      owner: "openmerge",
       name: "api",
-      fullName: "pullrabbit/api",
+      fullName: "openmerge/api",
       defaultBranch: "main",
       isPrivate: false,
     })).toThrow();
@@ -35,7 +35,7 @@ describe("repoSchema", () => {
       githubRepoId: 1,
       owner: "",
       name: "api",
-      fullName: "pullrabbit/api",
+      fullName: "openmerge/api",
       defaultBranch: "main",
       isPrivate: false,
     })).toThrow();

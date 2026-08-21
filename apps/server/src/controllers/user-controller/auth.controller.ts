@@ -119,7 +119,7 @@ export const githubExchange = async (req: Request, res: Response) => {
             headers: {
                 Accept: 'application/vnd.github+json',
                 Authorization: `Bearer ${tokenData.access_token}`,
-                'User-Agent': 'pullrabbit-server',
+                'User-Agent': 'openmerge-server',
             },
         });
 
@@ -209,7 +209,7 @@ export const githubCallback = async (req: Request, res: Response) => {
             headers: {
                 Accept: 'application/vnd.github+json',
                 Authorization: `Bearer ${tokenData.access_token}`,
-                'User-Agent': 'pullrabbit-server',
+                'User-Agent': 'openmerge-server',
             },
         });
 

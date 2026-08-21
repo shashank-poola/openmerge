@@ -3,14 +3,14 @@
 import { useState } from "react";
 
 const faqs = [
-  { question: "What is PullRabbit?", answer: "PullRabbit is an open source AI-powered GitHub App that runs parallel review agents on every pull request and posts inline comments on security, performance, and code quality issues." },
-  { question: "How do I install PullRabbit?", answer: "Install the CLI via npm, bun, or brew — or install the GitHub App directly from GitHub Marketplace. Setup takes under 30 seconds." },
-  { question: "Does PullRabbit need repository access?", answer: "Yes — only for the repositories you select during setup. You control which repos PullRabbit can access at all times." },
-  { question: "Which AI models does PullRabbit support?", answer: "PullRabbit works with Claude, GPT-4o, Gemini, and any other LLM provider. Configure your preferred model in settings." },
+  { question: "What is OpenMerge?", answer: "OpenMerge is an open source AI-powered GitHub App that runs parallel review agents on every pull request and posts inline comments on security, performance, and code quality issues." },
+  { question: "How do I install OpenMerge?", answer: "Install the CLI via npm, bun, or brew — or install the GitHub App directly from GitHub Marketplace. Setup takes under 30 seconds." },
+  { question: "Does OpenMerge need repository access?", answer: "Yes — only for the repositories you select during setup. You control which repos OpenMerge can access at all times." },
+  { question: "Which AI models does OpenMerge support?", answer: "OpenMerge works with Claude, GPT-4o, Gemini, and any other LLM provider. Configure your preferred model in settings." },
   { question: "How long does a PR review take?", answer: "Most reviews complete in under 60 seconds. Security, performance, and code quality agents run in parallel to keep things fast." },
-  { question: "How much does PullRabbit cost?", answer: "PullRabbit is free for open source repositories. Paid plans are available for private repositories and teams." },
+  { question: "How much does OpenMerge cost?", answer: "OpenMerge is free for open source repositories. Paid plans are available for private repositories and teams." },
   { question: "What about data and privacy?", answer: "Only your PR diff and relevant code context is sent to the AI model you configure. No data is stored permanently beyond your review session." },
-  { question: "Is PullRabbit open source?", answer: "Yes. PullRabbit is fully open source on GitHub under the MIT license." },
+  { question: "Is OpenMerge open source?", answer: "Yes. OpenMerge is fully open source on GitHub under the MIT license." },
 ];
 
 export function FAQSection() {
