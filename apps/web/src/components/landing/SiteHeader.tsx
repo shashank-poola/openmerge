@@ -3,9 +3,9 @@ import Link from "next/link";
 
 const navItems = [
   { label: "Features", href: "#features" },
-  { label: "PullRabbit Vs", href: "#competitors" },
+  { label: "OpenMerge Vs", href: "#competitors" },
   { label: "Docs", href: "/docs" },
-  { label: "GitHub", href: "https://github.com/shashank-poola/pullrabbit/" },
+  { label: "GitHub", href: "https://github.com/shashank-poola/openmerge/" },
 ];
 
 export function SiteHeader() {
@@ -16,8 +16,8 @@ export function SiteHeader() {
         className="transition-opacity duration-150 hover:opacity-80"
       >
         <Image
-          src="/pullrabbit/reclogo.png"
-          alt="PullRabbit"
+          src="/openmerge/reclogo.png"
+          alt="OpenMerge"
           width={160}
           height={50}
           className="h-12 w-auto"

@@ -4,7 +4,7 @@ const competitors = [
     points: [
       "Runs a single sequential AI pass on each PR.",
       "No parallel multi-agent architecture — one model, one pass.",
-      "PullRabbit runs three specialized agents simultaneously: security, performance, and code quality.",
+      "OpenMerge runs three specialized agents simultaneously: security, performance, and code quality.",
     ],
   },
   {
@@ -12,7 +12,7 @@ const competitors = [
     points: [
       "A codebase Q&A tool — answer questions about your code through chat.",
       "Not designed for automated PR review workflows or inline comments.",
-      "PullRabbit automates the full review pipeline end-to-end without human prompting.",
+      "OpenMerge automates the full review pipeline end-to-end without human prompting.",
     ],
   },
   {
@@ -20,7 +20,7 @@ const competitors = [
     points: [
       "A PR workflow tool optimized for stacked diffs and fast review queues.",
       "No AI-powered review agents — humans still do all the reviewing.",
-      "PullRabbit works alongside Graphite to bring automated AI review to every stack.",
+      "OpenMerge works alongside Graphite to bring automated AI review to every stack.",
     ],
   },
   {
@@ -28,7 +28,7 @@ const competitors = [
     points: [
       "An AI coding assistant that helps engineers write new code.",
       "Does not review pull requests or post inline diff comments.",
-      "PullRabbit handles the post-commit review stage — after the code is written.",
+      "OpenMerge handles the post-commit review stage — after the code is written.",
     ],
   },
 ];
@@ -36,9 +36,9 @@ const competitors = [
 export function CompetitorsSection() {
   return (
     <section id="competitors" className="border-t border-white/8 px-10 py-24">
-      <h2 className="mb-2 text-[18px] font-bold text-white">PullRabbit vs</h2>
+      <h2 className="mb-2 text-[18px] font-bold text-white">OpenMerge vs</h2>
       <p className="mb-14 text-[13px] text-[#555]">
-        How PullRabbit compares to other tools in the developer workflow.
+        How OpenMerge compares to other tools in the developer workflow.
       </p>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

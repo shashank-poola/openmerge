@@ -1,4 +1,4 @@
-name: PullRabbit Checks
+name: OpenMerge Checks
 
 on:
   workflow_call:
@@ -17,15 +17,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      DATABASE_URL: postgresql://pullrabbit:pullrabbit@localhost:5432/pullrabbit_ci?schema=public
+      DATABASE_URL: postgresql://openmerge:openmerge@localhost:5432/openmerge_ci?schema=public
 
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: pullrabbit
-          POSTGRES_PASSWORD: pullrabbit
-          POSTGRES_DB: pullrabbit_ci
+          POSTGRES_USER: openmerge
+          POSTGRES_PASSWORD: openmerge
+          POSTGRES_DB: openmerge_ci
         ports:
           - 5432:5432
         options: >-

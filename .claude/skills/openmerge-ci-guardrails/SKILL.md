@@ -1,9 +1,9 @@
 ---
-name: pullrabbit-ci-guardrails
-description: Use when changing PullRabbit code, workflows, database migrations, or release/deployment setup. Enforces branch-based development, CI expectations, migration safety, and main-branch protection rules.
+name: openmerge-ci-guardrails
+description: Use when changing OpenMerge code, workflows, database migrations, or release/deployment setup. Enforces branch-based development, CI expectations, migration safety, and main-branch protection rules.
 ---
 
-# PullRabbit CI Guardrails
+# OpenMerge CI Guardrails
 
 ## Branch workflow
 
@@ -54,7 +54,7 @@ Do not run production migrations from a normal PR workflow. Production migration
 The main validation workflows are:
 
 - `.github/workflows/test.yml` — PR and main validation entrypoint
-- `.github/workflows/pullrabbit.yml` — reusable install, Prisma, lint, typecheck, build workflow
+- `.github/workflows/openmerge.yml` — reusable install, Prisma, lint, typecheck, build workflow
 - `.github/workflows/security.yml` — CodeQL and dependency review
 - `.github/workflows/migrate-production.yml` — manual production DB migration workflow
 

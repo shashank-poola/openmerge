@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { GITHUB_EXCHANGE_URL } from "@/routes/apiRoute";
 
 const GITHUB_INSTALL_URL =
-  "https://github.com/apps/pull-rabbit/installations/select_target";
+  "https://github.com/apps/openmerge/installations/select_target";
 
 export function GithubCallbackPage() {
   const searchParams = useSearchParams();

@@ -12,4 +12,4 @@ permissions:
 
 jobs:
   validate:
-    uses: ./.github/workflows/pullrabbit.yml
+    uses: ./.github/workflows/openmerge.yml

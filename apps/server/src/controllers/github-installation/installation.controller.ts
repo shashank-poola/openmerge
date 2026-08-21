@@ -39,7 +39,7 @@ const getInstallationToken = async (githubInstallationId: string | bigint): Prom
         headers: {
             Accept: 'application/vnd.github+json',
             Authorization: `Bearer ${appJwt}`,
-            'User-Agent': 'pullrabbit-server',
+            'User-Agent': 'openmerge-server',
         },
     });
     if (!res.ok) throw new Error(`Failed to get installation token: ${res.status}`);
@@ -56,7 +56,7 @@ const fetchInstallationRepos = async (installationToken: string): Promise<Github
             headers: {
                 Accept: 'application/vnd.github+json',
                 Authorization: `Bearer ${installationToken}`,
-                'User-Agent': 'pullrabbit-server',
+                'User-Agent': 'openmerge-server',
             },
         });
         if (!res.ok) throw new Error(`Failed to fetch repos: ${res.status}`);
@@ -130,7 +130,7 @@ export const handleInstallationCallback = async (req: AuthRequest, res: Response
             headers: {
                 Accept: 'application/vnd.github+json',
                 Authorization: `Bearer ${appJwt}`,
-                'User-Agent': 'pullrabbit-server',
+                'User-Agent': 'openmerge-server',
             },
         });
 

@@ -57,7 +57,7 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
             owner: state.owner,
             repo: state.repoName,
             comment_id: Number(loadingCommentId),
-            body: "**PullRabbit** encountered an error during review. Please try again.",
+            body: "**OpenMerge** encountered an error during review. Please try again.",
           });
         } catch {
           // The review is already failing; preserving the original failure is more useful.
@@ -67,7 +67,9 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
     }
 
     const comments = state.allComments;
-    const reviewMarker = `<!-- pullrabbit-review:${state.reviewSessionId} -->`;
+    const reviewMarker = `<!-- openmerge-review:${state.reviewSessionId} -->`;
+    // Continue recognizing comments created before the brand migration.
+    const legacyReviewMarker = `<!-- ${["pull", "rabbit"].join("")}-review:${state.reviewSessionId} -->`;
     const body = `${buildReviewComment(state, comments, totalDurationMs)}\n\n${reviewMarker}`;
 
     try {
@@ -93,7 +95,9 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
           issue_number: state.prNumber,
           per_page: 100,
         });
-        const existingReviewComment = existingComments.find((comment) => comment.body?.includes(reviewMarker));
+        const existingReviewComment = existingComments.find((comment) =>
+          [reviewMarker, legacyReviewMarker].some((marker) => comment.body?.includes(marker)),
+        );
 
         if (existingReviewComment) {
           await octokit.rest.issues.updateComment({

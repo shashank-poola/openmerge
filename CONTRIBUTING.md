@@ -1,4 +1,4 @@
-# Contributing to PullRabbit
+# Contributing to OpenMerge
 
 ## Branch workflow
 

@@ -2,12 +2,12 @@ import { beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
 
 process.env.NODE_ENV = "test";
 process.env.SERVER_JWT_SECRET = "test-secret";
-process.env.DATABASE_URL = "postgresql://pullrabbit:pullrabbit@localhost:5432/pullrabbit_test";
+process.env.DATABASE_URL = "postgresql://openmerge:openmerge@localhost:5432/openmerge_test";
 process.env.GITHUB_CLIENT_ID = "github-client-id";
 process.env.GITHUB_CLIENT_SERVER = "github-client-secret";
 process.env.GITHUB_CALLBACK_URL = "http://localhost:3000/auth/github/callback";
 process.env.GITHUB_APP_ID = "12345";
-process.env.GITHUB_APP_NAME = "pullrabbit-test";
+process.env.GITHUB_APP_NAME = "openmerge-test";
 process.env.GITHUB_APP_CLIENT_ID = "github-app-client-id";
 process.env.GITHUB_APP_CLIENT_SECRET = "github-app-client-secret";
 process.env.GITHUB_WEBHOOK_SECRET = "webhook-secret";

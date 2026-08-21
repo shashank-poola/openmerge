@@ -7,7 +7,7 @@ import { buildAST } from "../../../apps/server/src/graph/context/build-ast";
 const tempRoots: string[] = [];
 
 async function createRepoFixture() {
-  const root = await mkdtemp(join(tmpdir(), "pullrabbit-ast-"));
+  const root = await mkdtemp(join(tmpdir(), "openmerge-ast-"));
   tempRoots.push(root);
   return root;
 }
@@ -21,7 +21,7 @@ describe("buildAST", () => {
     const repo = await createRepoFixture();
     await mkdir(join(repo, "src"), { recursive: true });
     await writeFile(join(repo, "src", "review.ts"), [
-      "import PullRabbit, { scoreReview as score } from './score';",
+      "import OpenMerge, { scoreReview as score } from './score';",
       "import 'reflect-metadata';",
       "export async function analyze() { return score(); }",
       "const helper = () => analyze();",
@@ -36,7 +36,7 @@ describe("buildAST", () => {
     expect(summary?.functions).toContainEqual({ name: "analyze", startLine: 3, isExported: true, isAsync: true });
     expect(summary?.functions).toContainEqual({ name: "helper", startLine: 4, isExported: false, isAsync: false });
     expect(summary?.classes[0]).toMatchObject({ name: "Reviewer", isExported: true, methods: ["run"] });
-    expect(summary?.imports).toContainEqual({ source: "./score", specifiers: ["PullRabbit", "scoreReview as score"], isLocal: true });
+    expect(summary?.imports).toContainEqual({ source: "./score", specifiers: ["OpenMerge", "scoreReview as score"], isLocal: true });
     expect(summary?.imports).toContainEqual({ source: "reflect-metadata", specifiers: [], isLocal: false });
   });
 

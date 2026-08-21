@@ -64,7 +64,7 @@ export function SetupCallbackPage() {
       <div className="w-full max-w-sm space-y-6 px-6 text-center">
         {viewState === "loading" && (
           <>
-            <p className="text-[13px] text-[#555]">Activating PullRabbit on your repos…</p>
+            <p className="text-[13px] text-[#555]">Activating OpenMerge on your repos…</p>
             <div className="mx-auto h-px w-16 animate-pulse bg-white/20" />
           </>
         )}
@@ -73,7 +73,7 @@ export function SetupCallbackPage() {
           <>
             <p className="text-[13px] text-white">Bot activated.</p>
             <p className="text-[12px] text-[#555]">
-              PullRabbit will now review every pull request automatically. Redirecting…
+              OpenMerge will now review every pull request automatically. Redirecting…
             </p>
           </>
         )}

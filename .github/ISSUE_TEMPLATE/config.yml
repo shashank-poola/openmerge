@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
-  - name: pullrabbit documentation
-    url: https://github.com/shashank-poola/pullrabbit#readme
+  - name: openmerge documentation
+    url: https://github.com/shashank-poola/openmerge#readme
     about: Browse setup, configuration, and usage guides before opening an issue.

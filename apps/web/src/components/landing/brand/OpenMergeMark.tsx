@@ -1,4 +1,4 @@
-export function PullRabbitMark({ color = "dark" }: { color?: "dark" | "light" }) {
+export function OpenMergeMark({ color = "dark" }: { color?: "dark" | "light" }) {
   const dotClass = color === "light" ? "bg-white" : "bg-pr-charcoal";
   return (
     <span className="grid w-[20px] grid-cols-3 gap-[4px]" aria-hidden="true">

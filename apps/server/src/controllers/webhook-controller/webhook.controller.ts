@@ -286,14 +286,14 @@ export async function handlePullRequestEvent(
                     owner: repo.owner,
                     repo: repo.name,
                     comment_id: Number(session.githubLoadingCommentId),
-                    body: '**PullRabbit** is analyzing this pull request again. An automated review will be posted as inline comments once the analysis is complete.',
+                    body: '**OpenMerge** is analyzing this pull request again. An automated review will be posted as inline comments once the analysis is complete.',
                 });
             } else {
                 const { data: comment } = await octokit.rest.issues.createComment({
                     owner: repo.owner,
                     repo: repo.name,
                     issue_number: prNumber,
-                    body: '**PullRabbit** is analyzing this pull request again. An automated review will be posted as inline comments once the analysis is complete.',
+                    body: '**OpenMerge** is analyzing this pull request again. An automated review will be posted as inline comments once the analysis is complete.',
                 });
                 createdLoadingCommentId = BigInt(comment.id);
             }

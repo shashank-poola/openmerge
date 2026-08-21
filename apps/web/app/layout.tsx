@@ -14,13 +14,13 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PullRabbit - AI PR Review Agents",
+  title: "OpenMerge - AI PR Review Agents",
   description:
     "Parallel AI code review agents that inspect pull requests, flag issues, and prepare merge-ready summaries.",
   icons: {
-    icon: "/pullrabbit/logo.png",
-    shortcut: "/pullrabbit/logo.png",
-    apple: "/pullrabbit/logo.png",
+    icon: "/openmerge/logo.png",
+    shortcut: "/openmerge/logo.png",
+    apple: "/openmerge/logo.png",
   },
 };
 
