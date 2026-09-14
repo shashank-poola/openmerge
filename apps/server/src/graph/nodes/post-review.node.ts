@@ -7,6 +7,7 @@ import { cleanupRepo } from "../context/clone-repo";
 import { buildReviewComment } from "./post-review.formatter";
 import { buildReviewCommentKey } from "../../utils/review-comment.utils";
 import { generateReviewSummary } from "../../agent/review-summary";
+import { reviewTraceOptions } from "../review-trace";
 
 const createInstallationOctokit = (githubInstallationId: string) =>
   new Octokit({
@@ -146,14 +147,7 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
       changedFiles: state.changedFiles,
       diff: state.diff ?? "",
       comments,
-      trace: {
-        metadata: {
-          reviewSessionId: state.reviewSessionId,
-          repository: `${state.owner}/${state.repoName}`,
-          prNumber: state.prNumber,
-          headSha: state.headSha,
-        },
-      },
+      trace: reviewTraceOptions(state),
     }).then(async (summary) => {
       if (!summary || reviewCommentId === null) return;
 

@@ -68,10 +68,10 @@ const shutdown = async (signal: string) => {
 
   try {
     await worker.close();
-    await shutdownLangfuse();
   } catch (error) {
     console.error("[worker] failed to close cleanly:", error);
   } finally {
+    await shutdownLangfuse();
     process.exit(0);
   }
 };

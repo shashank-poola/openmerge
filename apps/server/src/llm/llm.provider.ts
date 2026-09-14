@@ -2,15 +2,10 @@ import type { BaseLanguageModelInput } from "@langchain/core/language_models/bas
 import { groqForTask } from "./groq.config";
 import { geminiForTask, hasGemini } from "./gemini.config";
 import { langfuseCallbacks } from "../observability/langfuse";
+import type { LLMTraceOptions } from "./llm.trace";
 import type { GROQ_DEFAULTS } from "./models/groq.models";
 
 type Task = keyof typeof GROQ_DEFAULTS;
-
-export type LLMTraceOptions = {
-    runName?: string;
-    tags?: string[];
-    metadata?: Record<string, unknown>;
-};
 
 const buildConfig = (task: Task, provider: "groq" | "gemini", options?: LLMTraceOptions) => ({
     runName: options?.runName ?? `${task}-${provider}`,

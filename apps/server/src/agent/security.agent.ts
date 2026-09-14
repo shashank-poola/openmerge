@@ -1,5 +1,6 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { invokeLLM, type LLMTraceOptions } from "../llm/llm.provider";
+import { invokeLLM } from "../llm/llm.provider";
+import { agentTrace, type LLMTraceOptions } from "../llm/llm.trace";
 import { SECURITY_SYSTEM, SECURITY_HUMAN } from "../prompts/security.prompt";
 import { parseAgentComments, type AgentInput, type AgentResult } from "./agent.types";
 
@@ -15,7 +16,7 @@ export const runSecurityAgent = async (
                 new HumanMessage(SECURITY_HUMAN(input)),
             ],
             "security",
-            { runName: "securityAgent", tags: ["agent:security"], ...trace }
+            agentTrace("securityAgent", "agent:security", trace)
         );
         return {
             agentName: "securityAgent",

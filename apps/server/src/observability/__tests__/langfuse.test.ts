@@ -16,9 +16,8 @@ process.env.GROQ_API_KEY = "groq-test-key";
 delete process.env.LANGFUSE_PUBLIC_KEY;
 delete process.env.LANGFUSE_SECRET_KEY;
 
-const { isLangfuseEnabled, langfuseCallbacks, withReviewTrace, flushLangfuse } = await import(
-  "../langfuse"
-);
+const { isLangfuseEnabled, langfuseCallbacks, withReviewTrace, flushLangfuse, shutdownLangfuse } =
+  await import("../langfuse");
 
 const trace = {
   reviewSessionId: "session-1",
@@ -38,7 +37,22 @@ describe("langfuse observability", () => {
     await expect(withReviewTrace(trace, async () => "done")).resolves.toBe("done");
   });
 
+  test("propagates failures from the traced work", async () => {
+    await expect(
+      withReviewTrace(trace, async () => {
+        throw new Error("review failed");
+      }),
+    ).rejects.toThrow("review failed");
+  });
+
   test("flushing without a processor is a no-op", async () => {
     await expect(flushLangfuse()).resolves.toBeUndefined();
+  });
+
+  test("shutdown is safe and keeps tracing off", async () => {
+    await expect(shutdownLangfuse()).resolves.toBeUndefined();
+    expect(isLangfuseEnabled()).toBe(false);
+    expect(langfuseCallbacks()).toEqual([]);
+    await expect(withReviewTrace(trace, async () => "done")).resolves.toBe("done");
   });
 });

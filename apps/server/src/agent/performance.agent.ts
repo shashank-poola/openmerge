@@ -1,5 +1,6 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { invokeLLM, type LLMTraceOptions } from "../llm/llm.provider";
+import { invokeLLM } from "../llm/llm.provider";
+import { agentTrace, type LLMTraceOptions } from "../llm/llm.trace";
 import { PERFORMANCE_SYSTEM, PERFORMANCE_HUMAN } from "../prompts/performance.prompt";
 import { parseAgentComments, type AgentInput, type AgentResult } from "./agent.types";
 
@@ -15,7 +16,7 @@ export const runPerformanceAgent = async (
                 new HumanMessage(PERFORMANCE_HUMAN(input)),
             ],
             "performance",
-            { runName: "performanceAgent", tags: ["agent:performance"], ...trace }
+            agentTrace("performanceAgent", "agent:performance", trace)
         );
         return {
             agentName: "performanceAgent",

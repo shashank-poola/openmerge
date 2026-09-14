@@ -13,66 +13,117 @@ export type ReviewTrace = {
     headSha?: string;
 };
 
-let spanProcessor: LangfuseSpanProcessor | null = null;
-let tracerRegistered = false;
+/** Upper bound on how long a review job may wait for spans to reach Langfuse. */
+const FLUSH_TIMEOUT_MS = 5_000;
 
-export const isLangfuseEnabled = (): boolean =>
+let spanProcessor: LangfuseSpanProcessor | null = null;
+let setupState: "pending" | "ready" | "failed" | "shutdown" = "pending";
+
+const warn = (action: string, error: unknown): void => {
+    console.warn(`[langfuse] ${action} failed:`, (error as Error).message);
+};
+
+const hasCredentials = (): boolean =>
     Boolean(env.LANGFUSE_PUBLIC_KEY && env.LANGFUSE_SECRET_KEY);
 
-const ensureTracerProvider = (): void => {
-    if (tracerRegistered || !isLangfuseEnabled()) return;
-    tracerRegistered = true;
+export const isLangfuseEnabled = (): boolean =>
+    hasCredentials() && setupState !== "failed" && setupState !== "shutdown";
 
-    spanProcessor = new LangfuseSpanProcessor({
-        publicKey: env.LANGFUSE_PUBLIC_KEY,
-        secretKey: env.LANGFUSE_SECRET_KEY,
-        baseUrl: env.LANGFUSE_BASE_URL,
-        environment: env.LANGFUSE_TRACING_ENVIRONMENT,
-    });
+/**
+ * Registers the Langfuse span processor as the global tracer provider on first use.
+ * Any setup failure permanently disables tracing instead of breaking the review.
+ */
+const ensureTracerProvider = (): boolean => {
+    if (setupState !== "pending") return setupState === "ready";
+    if (!hasCredentials()) return false;
 
-    new NodeTracerProvider({ spanProcessors: [spanProcessor] }).register();
+    try {
+        spanProcessor = new LangfuseSpanProcessor({
+            publicKey: env.LANGFUSE_PUBLIC_KEY,
+            secretKey: env.LANGFUSE_SECRET_KEY,
+            baseUrl: env.LANGFUSE_BASE_URL,
+            environment: env.LANGFUSE_TRACING_ENVIRONMENT,
+        });
+
+        new NodeTracerProvider({ spanProcessors: [spanProcessor] }).register();
+        setupState = "ready";
+    } catch (error) {
+        warn("setup", error);
+        spanProcessor = null;
+        setupState = "failed";
+    }
+
+    return setupState === "ready";
 };
 
 export const langfuseCallbacks = (): BaseCallbackHandler[] => {
-    if (!isLangfuseEnabled()) return [];
-    ensureTracerProvider();
-    return [new CallbackHandler()];
-};
+    if (!ensureTracerProvider()) return [];
 
-export const withReviewTrace = <T>(trace: ReviewTrace, fn: () => Promise<T>): Promise<T> => {
-    if (!isLangfuseEnabled()) return fn();
-    ensureTracerProvider();
-
-    return propagateAttributes(
-        {
-            traceName: "pr-review",
-            sessionId: trace.reviewSessionId,
-            tags: [`repo:${trace.owner}/${trace.repoName}`, `pr:${trace.prNumber}`],
-            metadata: {
-                reviewSessionId: trace.reviewSessionId,
-                repository: `${trace.owner}/${trace.repoName}`,
-                prNumber: String(trace.prNumber),
-                ...(trace.headSha ? { headSha: trace.headSha } : {}),
-            },
-        },
-        fn,
-    );
-};
-
-export const flushLangfuse = async (): Promise<void> => {
     try {
-        await spanProcessor?.forceFlush();
+        return [new CallbackHandler()];
     } catch (error) {
-        console.warn("[langfuse] flush failed:", (error as Error).message);
+        warn("callback handler", error);
+        return [];
+    }
+};
+
+/**
+ * Runs `fn` with the trace attributes every LLM call of a review inherits, so one
+ * review lands in one Langfuse trace keyed by `reviewSessionId`.
+ */
+export const withReviewTrace = <T>(trace: ReviewTrace, fn: () => Promise<T>): Promise<T> => {
+    if (!ensureTracerProvider()) return fn();
+
+    try {
+        return propagateAttributes(
+            {
+                traceName: "pr-review",
+                sessionId: trace.reviewSessionId,
+                tags: [`repo:${trace.owner}/${trace.repoName}`, `pr:${trace.prNumber}`],
+                metadata: {
+                    reviewSessionId: trace.reviewSessionId,
+                    repository: `${trace.owner}/${trace.repoName}`,
+                    prNumber: String(trace.prNumber),
+                    ...(trace.headSha ? { headSha: trace.headSha } : {}),
+                },
+            },
+            fn,
+        );
+    } catch (error) {
+        warn("trace propagation", error);
+        return fn();
+    }
+};
+
+/** Exports buffered spans. Never waits longer than FLUSH_TIMEOUT_MS on an unreachable Langfuse. */
+export const flushLangfuse = async (): Promise<void> => {
+    if (!spanProcessor) return;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+        await Promise.race([
+            spanProcessor.forceFlush(),
+            new Promise<void>((resolve) => {
+                timer = setTimeout(resolve, FLUSH_TIMEOUT_MS);
+            }),
+        ]);
+    } catch (error) {
+        warn("flush", error);
+    } finally {
+        clearTimeout(timer);
     }
 };
 
 export const shutdownLangfuse = async (): Promise<void> => {
+    const processor = spanProcessor;
+    spanProcessor = null;
+    // The global tracer provider cannot be replaced, so tracing stays off after shutdown.
+    setupState = "shutdown";
+    if (!processor) return;
+
     try {
-        await spanProcessor?.shutdown();
+        await processor.shutdown();
     } catch (error) {
-        console.warn("[langfuse] shutdown failed:", (error as Error).message);
-    } finally {
-        spanProcessor = null;
+        warn("shutdown", error);
     }
 };

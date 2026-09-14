@@ -80,7 +80,7 @@ packages/
 
 ### Key Patterns
 
-**Observability:** `apps/server/src/observability/langfuse.ts` wires Langfuse tracing through an OpenTelemetry span processor and the LangChain callback handler. It is inert unless `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set. The worker wraps each review in `withReviewTrace` so every agent call lands in one trace keyed by `reviewSessionId`.
+**Observability:** `apps/server/src/observability/langfuse.ts` wires Langfuse tracing through an OpenTelemetry span processor and the LangChain callback handler. It is inert unless `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set, and any tracing failure disables itself rather than failing the review. The worker wraps each review in `withReviewTrace` so every agent call lands in one trace keyed by `reviewSessionId`, then flushes with a bounded timeout after each job.
 
 **Environment validation:** `apps/server/src/config/env.ts` uses Zod to parse and validate all env vars at startup. Add new vars there first.
 

@@ -1,5 +1,6 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { invokeLLM, type LLMTraceOptions } from "../llm/llm.provider";
+import { invokeLLM } from "../llm/llm.provider";
+import { agentTrace, type LLMTraceOptions } from "../llm/llm.trace";
 import { CODE_REVIEW_SYSTEM, CODE_REVIEW_HUMAN } from "../prompts/code-review.prompt";
 import { parseAgentComments, type AgentInput, type AgentResult } from "./agent.types";
 
@@ -15,7 +16,7 @@ export const runCodeAgent = async (
                 new HumanMessage(CODE_REVIEW_HUMAN(input)),
             ],
             "codeReview",
-            { runName: "codeAgent", tags: ["agent:code"], ...trace }
+            agentTrace("codeAgent", "agent:code", trace)
         );
         return {
             agentName: "codeAgent",

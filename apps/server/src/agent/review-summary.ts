@@ -1,6 +1,7 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import type { AgentComment } from "../types/review-context.type";
-import { invokeLLM, type LLMTraceOptions } from "../llm/llm.provider";
+import { invokeLLM } from "../llm/llm.provider";
+import { agentTrace, type LLMTraceOptions } from "../llm/llm.trace";
 
 export type ReviewSummary = {
     overview: string;
@@ -85,7 +86,7 @@ export const generateReviewSummary = async (params: {
         const result = await invokeLLM([
             new SystemMessage(SUMMARY_SYSTEM),
             new HumanMessage(prompt),
-        ], "summary", { runName: "reviewSummary", tags: ["agent:summary"], ...params.trace });
+        ], "summary", agentTrace("reviewSummary", "agent:summary", params.trace));
         return parseReviewSummary(result.content);
     } catch (error) {
         console.warn("Could not generate PR summary:", error instanceof Error ? error.message : String(error));
