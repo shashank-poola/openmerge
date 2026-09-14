@@ -80,6 +80,8 @@ packages/
 
 ### Key Patterns
 
+**Observability:** `apps/server/src/observability/langfuse.ts` wires Langfuse tracing through an OpenTelemetry span processor and the LangChain callback handler. It is inert unless `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set. The worker wraps each review in `withReviewTrace` so every agent call lands in one trace keyed by `reviewSessionId`.
+
 **Environment validation:** `apps/server/src/config/env.ts` uses Zod to parse and validate all env vars at startup. Add new vars there first.
 
 **Database:** Single Prisma schema at `packages/database/prisma/schema.prisma`. Import client as `import { db } from "@repo/database"`. Models: User, Installation, Repository, Subscription, ReviewSession, ReviewComment.
@@ -94,6 +96,6 @@ packages/
 
 Server needs: `PORT`, `SERVER_JWT_SECRET`, `DATABASE_URL`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SERVER`, `GITHUB_CALLBACK_URL`, `GITHUB_APP_ID`, `GITHUB_APP_NAME`, `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_PRIVATE_KEY`, `QDRANT_URL`, `QDRANT_CLUSTER_ID`.
 
-Optional: `REDIS_URL`, `EMBED_MODEL`, `GOOGLE_GEMINI_API`, `EXA_API`.
+Optional: `REDIS_URL`, `EMBED_MODEL`, `GOOGLE_GEMINI_API`, `EXA_API`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL`, `LANGFUSE_TRACING_ENVIRONMENT`.
 
 Web needs: `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_API_URL`.

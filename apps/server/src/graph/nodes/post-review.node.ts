@@ -146,6 +146,14 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
       changedFiles: state.changedFiles,
       diff: state.diff ?? "",
       comments,
+      trace: {
+        metadata: {
+          reviewSessionId: state.reviewSessionId,
+          repository: `${state.owner}/${state.repoName}`,
+          prNumber: state.prNumber,
+          headSha: state.headSha,
+        },
+      },
     }).then(async (summary) => {
       if (!summary || reviewCommentId === null) return;
 

@@ -1,9 +1,12 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { invokeLLM } from "../llm/llm.provider";
+import { invokeLLM, type LLMTraceOptions } from "../llm/llm.provider";
 import { SECURITY_SYSTEM, SECURITY_HUMAN } from "../prompts/security.prompt";
 import { parseAgentComments, type AgentInput, type AgentResult } from "./agent.types";
 
-export const runSecurityAgent = async (input: AgentInput): Promise<AgentResult> => {
+export const runSecurityAgent = async (
+    input: AgentInput,
+    trace?: LLMTraceOptions
+): Promise<AgentResult> => {
     const start = Date.now();
     try {
         const { content, provider } = await invokeLLM(
@@ -11,7 +14,8 @@ export const runSecurityAgent = async (input: AgentInput): Promise<AgentResult> 
                 new SystemMessage(SECURITY_SYSTEM),
                 new HumanMessage(SECURITY_HUMAN(input)),
             ],
-            "security"
+            "security",
+            { runName: "securityAgent", tags: ["agent:security"], ...trace }
         );
         return {
             agentName: "securityAgent",
