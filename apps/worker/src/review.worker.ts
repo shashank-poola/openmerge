@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Job } from "bullmq";
 import { db } from "@repo/database";
 import { reviewGraph } from "../../server/src/graph/review.graph";
+import { flushLangfuse, withReviewTrace } from "../../server/src/observability/langfuse";
 import {
   buildReviewJobId,
   reviewQueue,
@@ -164,8 +165,8 @@ export async function processReviewJob(
   try {
     console.log(`[worker] processing session ${job.data.reviewSessionId} PR#${job.data.prNumber}`);
 
-    const result = await withTimeout(
-      (signal) => deps.reviewGraph.invoke({
+    const runReview = (signal: AbortSignal) =>
+      deps.reviewGraph.invoke({
         reviewSessionId: job.data.reviewSessionId,
         repositoryId: job.data.repositoryId,
         jobId: queueJobId,
@@ -177,7 +178,19 @@ export async function processReviewJob(
         baseBranch: job.data.baseBranch,
         owner: job.data.owner,
         repoName: job.data.repoName,
-      }, { signal }),
+      }, { signal });
+
+    const result = await withTimeout(
+      (signal) => withReviewTrace(
+        {
+          reviewSessionId: job.data.reviewSessionId,
+          owner: job.data.owner,
+          repoName: job.data.repoName,
+          prNumber: job.data.prNumber,
+          headSha: job.data.headSha,
+        },
+        () => runReview(signal),
+      ),
       deps.reviewTimeoutMs ?? REVIEW_TIMEOUT_MS,
       "Review processing timed out",
     );
@@ -244,5 +257,6 @@ export async function processReviewJob(
     throw error;
   } finally {
     clearInterval(heartbeat);
+    await flushLangfuse();
   }
 }

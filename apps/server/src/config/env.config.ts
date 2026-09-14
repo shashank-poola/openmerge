@@ -38,6 +38,10 @@ const envSchema = z.object({
     GROQ_API_KEY: z.string().min(1),
     GEMINI_API_KEY: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(1).optional()),
     EXA_API: z.string().optional(),
+    LANGFUSE_PUBLIC_KEY: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(1).optional()),
+    LANGFUSE_SECRET_KEY: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(1).optional()),
+    LANGFUSE_BASE_URL: z.preprocess((v) => (v === "" ? undefined : v), z.url().optional()),
+    LANGFUSE_TRACING_ENVIRONMENT: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(1).optional()),
     NEXT_PUBLIC_APP_URL: z.string().optional(),
     NEXT_PUBLIC_API_URL: z.string().optional(),
   });

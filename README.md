@@ -88,8 +88,11 @@ For a dependable deployment:
 - use managed PostgreSQL and Redis with persistent storage and backups;
 - keep GitHub, model-provider, and database credentials in a secret manager;
 - set `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_API_URL`, and `GITHUB_CALLBACK_URL` to their public HTTPS addresses;
-- apply database migrations as part of deployment with `bun --cwd packages/database run db:migrate:deploy`; and
-- configure health checks, structured logs, queue monitoring, and alerts for failed jobs.
+- apply database migrations as part of deployment with `bun --cwd packages/database run db:migrate:deploy`;
+- configure health checks, structured logs, queue monitoring, and alerts for failed jobs; and
+- optionally set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` (plus `LANGFUSE_TRACING_ENVIRONMENT`) to send model traces, token usage, and latency for every review to [Langfuse](https://langfuse.com). Tracing stays off when the keys are absent.
+
+Traces contain the prompts sent to the model, which include the reviewed diff and surrounding source. Point `LANGFUSE_BASE_URL` at a self-hosted Langfuse instance when reviewed code must not leave your infrastructure, and leave the keys unset to disable tracing entirely.
 
 Only install the GitHub App on repositories you intend OpenMerge to review. Rotate any exposed GitHub private key, webhook secret, OAuth secret, or model-provider key immediately.
 
