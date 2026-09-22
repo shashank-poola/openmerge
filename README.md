@@ -1,110 +1,241 @@
 <p align="center">
-  <img src="apps/web/public/companies/openmerge.png" alt="OpenMerge" width="120" />
+  <img src="apps/web/public/companies/openmerge.png" alt="OpenMerge" width="96" />
 </p>
 
 <h1 align="center">OpenMerge</h1>
 
 <p align="center">
-  <strong>AI code reviewer for pull requests.</strong>
+  <strong>The PR bot that reviews more than the diff.</strong>
 </p>
 
 <p align="center">
-  OpenMerge reviews GitHub pull requests for correctness, security, and performance issues, then leaves focused comments directly on the code that needs attention.
+  OpenMerge automatically reviews GitHub pull requests with code quality, security, and performance agents. It builds context from the changed code, follows related files and history, then posts a clear summary and actionable inline comments back to GitHub.
 </p>
 
 <p align="center">
-  <a href="https://github.com/apps/openmerge-app">Install the GitHub App</a> · <a href="LICENSE">MIT License</a> · <a href="https://bun.sh">Built with Bun</a>
+  <a href="https://openmerge.xyz">Get started</a> ·
+  <a href="https://github.com/apps/openmerge-app/installations/select_target">Install on GitHub</a> ·
+  <a href="LICENSE">MIT License</a> ·
+  <a href="https://bun.sh">Built with Bun</a>
 </p>
 
----
+<p align="center">
+  <img src="apps/web/public/reviews/second.jpg" alt="OpenMerge review summary posted to a GitHub pull request" width="900" />
+</p>
 
-## What OpenMerge does
+## Get Started
 
-Code review is more useful when it understands more than a patch. OpenMerge starts with the changed lines, then follows imports, parses the affected code, maps nearby calls, and checks relevant history. That context helps it explain *why* something may be a problem not simply point at a suspicious line.
+1. Sign in at [openmerge.xyz](https://openmerge.xyz) with your GitHub account.
+2. [Install the OpenMerge GitHub App](https://github.com/apps/openmerge-app/installations/select_target).
+3. Choose the repositories OpenMerge can review.
+4. Open or update a pull request. OpenMerge will post its review directly on the pull request.
 
-When a pull request opens or is updated, OpenMerge reviews it automatically and posts the results where your team already works: on the pull request.
+OpenMerge reviews pull requests when they are opened, reopened, or updated with new commits. There is no separate review command to run in your repository.
 
-It is designed to catch the things that are easy to miss in a fast review: a broken condition, an unsafe input path, an expensive query in a loop, or a change whose effect reaches further than the diff suggests. Human reviewers still decide whether a change is right for the product.
+## Review Configuration
 
-## How a review happens
+Add an `.openmerge.yml` file to the root of a repository to control which agents run and which files they inspect:
 
-```text
-Pull request opened or updated
-              │
-              ▼
-GitHub sends OpenMerge a signed webhook
-              │
-              ▼
-OpenMerge collects the diff and surrounding code context
-              │
-              ▼
-Code, security, and performance reviewers run in parallel
-              │
-              ▼
-Duplicate findings are filtered and ranked by severity
-              │
-              ▼
-Clear inline comments are posted to the pull request
-```
+~~~yaml
+agents:
+  code_quality: true
+  security: true
+  performance: true
 
-The context phase includes AST analysis, call-graph traversal, import resolution, static checks, and related pull-request history. Reviews are kept concise: findings are deduplicated, ranked from critical to low severity, and capped so a pull request remains readable.
+ignore:
+  - "**/*.test.ts"
+  - "migrations/**"
+  - "*.generated.*"
 
-## What it reviews
+severity_threshold: warning
+~~~
 
-| Reviewer | Looks for | Example |
-| --- | --- | --- |
-| **Code** | Correctness, regressions, edge cases, and error handling | A branch that silently skips an empty result. |
-| **Security** | Unsafe input handling, authentication mistakes, secrets, and injection risks | User input reaching a query without validation. |
-| **Performance** | Avoidable work, blocking I/O, N+1 queries, and unnecessary renders | A database request made once for every item in a list. |
+### Configuration Options
 
-OpenMerge comments only when it has something actionable to say. It is an additional reviewer, not an approval bot and not a substitute for understanding product requirements.
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `agents.code_quality` | boolean | `true` | Enable correctness and code quality findings. |
+| `agents.security` | boolean | `true` | Enable security findings such as injection risks and exposed secrets. |
+| `agents.performance` | boolean | `true` | Enable performance findings such as N+1 queries and unnecessary work. |
+| `ignore` | string[] | `[]` | Glob patterns to exclude from review. |
+| `severity_threshold` | string | `warning` | Minimum severity to report: `info`, `warning`, or `error`. |
 
-## Install OpenMerge
+If `.openmerge.yml` is not present, OpenMerge uses the defaults shown above.
 
-The quickest way to use OpenMerge is through the GitHub App.
+## How a Review Works
 
-1. Install [OpenMerge on GitHub](https://github.com/apps/openmerge-app).
-2. Choose the repositories OpenMerge can access.
-3. Open or update a pull request.
+~~~text
+Pull request opened, reopened, or updated
+                  │
+                  ▼
+OpenMerge validates the signed GitHub webhook
+                  │
+                  ▼
+The context pipeline collects the diff, ASTs, imports, history, and checks
+                  │
+                  ▼
+Code quality, security, and performance agents run in parallel
+                  │
+                  ▼
+Findings are combined, deduplicated, and ranked by severity
+                  │
+                  ▼
+A summary and inline comments are posted back to the pull request
+~~~
 
-OpenMerge receives the pull-request event, starts a review, and adds comments back to that pull request. There is no separate dashboard to watch during a review.
+The context pipeline is designed to look beyond changed lines. It can inspect related files, resolve imports, traverse the code graph, run linters or static checks, and use relevant pull-request history before the agents make a finding.
 
-## OpenMerge in simple terms
+## Parallel Review
 
-- OpenMerge connects to GitHub and watches for new or updated pull requests.
-- It reads the changed files and the surrounding code so it can understand how a change affects the rest of the project.
-- Three reviewers work at the same time: one checks correctness, one checks security, and one checks performance.
-- Their findings are combined, duplicate comments are removed, and the most important issues are shown first.
-- OpenMerge posts clear, actionable comments directly on the pull request.
-- It helps human reviewers move faster; it does not replace their judgment about the product or the code.
+OpenMerge runs parallel agents over your pull request, combines their findings, and posts a concise summary with actionable inline comments directly on GitHub.
 
-## Running it in production
+It gives your team more context during review while keeping the final decision with human reviewers.
 
-OpenMerge is a small distributed system: the web app serves the interface, the API verifies GitHub events and creates review jobs, and the worker processes those jobs. PostgreSQL stores application and webhook state; Redis carries the review queue.
+## Roadmap
 
-For a dependable deployment:
+- Richer repository memory and cross-file context
+- Streaming review progress and findings
+- More granular per-repository review rules
+- Additional notifications and integrations
+- More model and provider controls
 
-- run the API and worker as separate, independently restartable services;
-- use managed PostgreSQL and Redis with persistent storage and backups;
-- keep GitHub, model-provider, and database credentials in a secret manager;
-- set `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_API_URL`, and `GITHUB_CALLBACK_URL` to their public HTTPS addresses;
-- apply database migrations as part of deployment with `bun --cwd packages/database run db:migrate:deploy`; and
-- configure health checks, structured logs, queue monitoring, and alerts for failed jobs.
+## Local Development
 
-Only install the GitHub App on repositories you intend OpenMerge to review. Rotate any exposed GitHub private key, webhook secret, OAuth secret, or model-provider key immediately.
+### Prerequisites
 
-## Project status
+- [Bun](https://bun.sh) 1.2.22 or newer
+- Node.js 20 or newer
+- Docker Desktop with Docker Compose
+- A GitHub account with permission to create GitHub Apps
+- A GitHub OAuth App and GitHub App
+- A Groq API key for the default review agents
+- A Gemini API key (optional fallback/provider)
+- Qdrant and Exa credentials when using those integrations
 
-OpenMerge is in beta. The core pull-request review flow is working; features such as richer repository memory, streaming findings, configurable review rules, and additional notifications are evolving. Review every finding before acting on it, especially for security-sensitive changes.
+### Installation
+
+Clone the repository and install the workspace dependencies:
+
+~~~bash
+git clone https://github.com/shashank-poola/openmerge.git
+cd openmerge
+bun install
+~~~
+
+Start the local PostgreSQL and Redis services:
+
+~~~bash
+docker compose up -d
+~~~
+
+Generate the Prisma client and apply the existing migrations:
+
+~~~bash
+bun --cwd packages/database run generate
+bun --cwd packages/database run db:migrate:deploy
+~~~
+
+### Create the GitHub App
+
+In GitHub, go to **Settings → Developer settings → GitHub Apps** and create an app with:
+
+- **Webhook URL:** `https://<your-public-api>/api/v1/webhook/github`
+- **Webhook secret:** a value you also set as `GITHUB_WEBHOOK_SECRET`
+- **Repository permissions:**
+  - Contents: Read-only
+  - Metadata: Read-only
+  - Issues: Read and write
+  - Pull requests: Read-only
+- **Subscribe to events:**
+  - Installation
+  - Pull request
+
+Generate a private key and note the App ID, Client ID, and Client Secret. For local development, expose the API with [ngrok](https://ngrok.com/) or another HTTPS tunnel, then use the public URL in the GitHub App webhook settings.
+
+### Environment Variables
+
+The server validates its environment at startup. Create `apps/server/.env` with the values for your GitHub OAuth App, GitHub App, database, queue, and model provider:
+
+~~~dotenv
+PORT=8000
+SERVER_JWT_SECRET=replace-with-a-long-random-secret
+
+DATABASE_URL=postgresql://openmerge:password@localhost:5433/openmerge_db
+REDIS_URL=redis://localhost:6379
+
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SERVER=...
+GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
+
+GITHUB_APP_ID=...
+GITHUB_APP_NAME=openmerge-app
+GITHUB_APP_CLIENT_ID=...
+GITHUB_APP_CLIENT_SECRET=...
+GITHUB_WEBHOOK_SECRET=...
+GITHUB_PRIVATE_KEY=...
+
+GROQ_API_KEY=...
+GEMINI_API_KEY=...
+
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:8000
+~~~
+
+Keep the private key in the format expected by the application, with escaped newlines when it is stored in a single environment variable. Do not commit secrets.
+
+The worker also needs `DATABASE_URL` and `REDIS_URL`. Put those values in `apps/worker/.env` if they are not available through the environment used to start the worker. The web app needs `NEXT_PUBLIC_API_URL` in `apps/web/.env`.
+
+### Run the Applications
+
+Start the web app, API server, and review worker together:
+
+~~~bash
+bun run dev
+~~~
+
+Open the dashboard at [http://localhost:3000](http://localhost:3000). The API runs on [http://localhost:8000](http://localhost:8000).
+
+To run one workspace at a time:
+
+~~~bash
+bun run dev --filter=web
+bun run dev --filter=server
+bun run dev --filter=worker
+~~~
+
+The API webhook endpoint is:
+
+~~~text
+POST /api/v1/webhook/github
+~~~
+
+### Checks and Tests
+
+~~~bash
+bun run lint
+bun run typecheck
+bun run test
+bun run build
+~~~
+
+## Project Structure
+
+| Package | Responsibility |
+| --- | --- |
+| `apps/web` | Next.js dashboard and documentation site. |
+| `apps/server` | Express API, GitHub OAuth, webhook ingestion, and review graph. |
+| `apps/worker` | BullMQ worker that executes queued reviews. |
+| `packages/database` | Prisma schema, migrations, and PostgreSQL client. |
+| `packages/redis` | Shared Redis client utilities. |
 
 ## Contributing
 
-Issues and pull requests are welcome. Keep changes focused, validate inputs at service boundaries, and add or update tests with behavior changes. Before submitting a pull request, run the relevant workspace checks and tests.
+Issues and pull requests are welcome. Keep changes focused, validate inputs at service boundaries, and add or update tests when behavior changes. Before opening a pull request, run the relevant lint, typecheck, build, and test commands.
 
 ## License
 
 OpenMerge is released under the [MIT License](LICENSE).
 
----
-
-Built for teams that want calmer, more informed pull-request reviews.
+<p align="center">
+  Built for teams that want calmer, more informed pull-request reviews.
+</p>
