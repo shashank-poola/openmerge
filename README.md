@@ -85,21 +85,11 @@ A summary and inline comments are posted back to the pull request
 
 The context pipeline is designed to look beyond changed lines. It can inspect related files, resolve imports, traverse the code graph, run linters or static checks, and use relevant pull-request history before the agents make a finding.
 
-## What OpenMerge Reviews
+## Parallel Review
 
-### Code Quality
+OpenMerge runs parallel agents over your pull request, combines their findings, and posts a concise summary with actionable inline comments directly on GitHub.
 
-Finds correctness issues, regressions, dead code, edge cases, naming problems, and missing error handling.
-
-### Security
-
-Looks for unsafe input handling, injection risks, exposed secrets, insecure dependencies, and common OWASP-style issues.
-
-### Performance
-
-Checks for N+1 queries, missing indexes, blocking work, unnecessary allocations, unbounded fetches, and avoidable algorithmic cost.
-
-OpenMerge is an additional reviewer. Human reviewers still decide whether a change fits the product and is safe to merge.
+It gives your team more context during review while keeping the final decision with human reviewers.
 
 ## Roadmap
 
