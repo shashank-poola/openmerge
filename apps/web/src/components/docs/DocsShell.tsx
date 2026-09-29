@@ -63,8 +63,10 @@ export function DocsShell({ children }: { children: ReactNode }) {
       </header>
 
       <div className="mx-auto flex max-w-[1440px]">
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-[264px] shrink-0 border-r border-[#ececea] bg-[#fbfbfa] lg:block">
-          <DocsNav />
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-[280px] shrink-0 p-3 pr-0 lg:block">
+          <div className="h-full overflow-hidden rounded-2xl border border-[#ececea] bg-[#fbfbfa] shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+            <DocsNav />
+          </div>
         </aside>
         <div className="min-w-0 flex-1">{children}</div>
       </div>
@@ -72,11 +74,16 @@ export function DocsShell({ children }: { children: ReactNode }) {
       {drawerOpen ? (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button type="button" aria-label="Close documentation menu" onClick={() => setDrawerOpenOn(null)} className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" />
-          <aside className="om-rise absolute inset-y-0 left-0 w-[284px] border-r border-[#ececea] bg-[#fbfbfa] shadow-2xl">
-            <button type="button" onClick={() => setDrawerOpenOn(null)} aria-label="Close documentation menu" className="absolute right-3 top-3 z-10 grid size-8 place-items-center rounded-lg text-[#6b6b67] hover:bg-[#efefed]">
-              <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={1.8} aria-hidden="true" />
-            </button>
-            <DocsNav />
+          <aside className="om-rise absolute inset-y-2 left-2 flex w-[284px] flex-col overflow-hidden rounded-2xl border border-[#ececea] bg-[#fbfbfa] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#ececea] px-4 py-2.5">
+              <span className="text-[13px] font-medium text-[#171717]">Documentation</span>
+              <button type="button" onClick={() => setDrawerOpenOn(null)} aria-label="Close documentation menu" className="grid size-8 place-items-center rounded-lg text-[#6b6b67] hover:bg-[#efefed]">
+                <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">
+              <DocsNav />
+            </div>
           </aside>
         </div>
       ) : null}
