@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
-import { installationCallback, getMe } from "../api";
+import { installationCallback, getMe, isAuthError } from "../api";
 import { INSTALLATIONS_CALLBACK_URL, ME_URL } from "@/routes/apiRoute";
 
 type FetchFn = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
@@ -58,5 +58,13 @@ describe("web api helpers", () => {
       body: JSON.stringify({ installationId: "98765" }),
     });
     expect(result).toEqual({ success: true });
+  });
+
+  test("isAuthError recognises every session rejection the API returns", () => {
+    for (const code of ["UNAUTHORIZED", "INVALID_TOKEN", "TOKEN_REQUIRED", "USER_NOT_FOUND", "SESSION_EXPIRED"]) {
+      expect(isAuthError(code)).toBe(true);
+    }
+    expect(isAuthError("FAILED_FETCHING_DASHBOARD")).toBe(false);
+    expect(isAuthError(null)).toBe(false);
   });
 });
