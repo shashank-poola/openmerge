@@ -10,19 +10,19 @@ const steps = [
     tone: "bg-[#e8f0ff]",
     accent: "text-[#2e6cf6]",
     preview: (
-      <div className="space-y-3 rounded-2xl border border-[#dbe5ff] bg-white p-5 shadow-[0_12px_35px_rgba(48,94,190,0.10)]">
+      <div className="space-y-3 rounded-[12px] border border-black/[0.09] bg-white p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(16,24,40,0.06),0_4px_10px_-2px_rgba(16,24,40,0.08),0_18px_30px_-14px_rgba(16,24,40,0.16)]">
         <div className="flex items-center justify-between gap-2 text-[12px] text-[#202020]">
           <div className="flex items-center gap-2 font-semibold">
             <Image src="/companies/openmerge.png" alt="" width={28} height={28} className="size-7 rounded-lg object-cover" />
             <span><span className="block">OpenMerge</span><span className="block text-[10px] font-normal text-[#80838b]">GitHub App</span></span>
           </div>
-          <span className="rounded-full bg-[#e8f7ed] px-2 py-1 text-[10px] font-medium text-[#278040]">Connected</span>
+          <span className="rounded-md border border-[#bfe3cb] bg-[#effaf2] px-1.5 py-0.5 text-[10px] font-semibold text-[#1f7a3d]">Connected</span>
         </div>
-        <div className="flex items-center justify-between rounded-xl bg-[#f6f8fc] px-3 py-2.5 text-[11px] text-[#525866]">
+        <div className="flex items-center justify-between rounded-lg border border-black/[0.06] bg-[#f7f8fa] px-3 py-2.5 text-[11px] font-medium text-[#3f4350]">
           <span>Repositories</span>
-          <span className="rounded-full bg-[#dce7ff] px-2 py-1 font-medium text-[#2e6cf6]">3 selected</span>
+          <span className="rounded-md border border-[#c9d9fb] bg-[#eef3ff] px-1.5 py-0.5 font-semibold text-[#2458c9]">3 selected</span>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-[#525866]"><span className="size-2 rounded-full bg-[#31b36b]" /> GitHub connected</div>
+        <div className="flex items-center gap-2 text-[11px] font-medium text-[#3f4350]"><span className="size-2 rounded-full bg-[#31b36b] ring-2 ring-[#31b36b]/15" /> GitHub connected</div>
       </div>
     ),
   },
@@ -33,9 +33,9 @@ const steps = [
     tone: "bg-[#fff1df]",
     accent: "text-[#e57620]",
     preview: (
-      <div className="relative h-[210px] overflow-hidden rounded-2xl border border-[#ffe2c1] bg-white p-4 shadow-[0_12px_35px_rgba(195,108,24,0.10)]">
-        <div className="absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-[#ffe2c1] bg-[#fffaf5] px-3 py-2 text-[11px] font-semibold text-[#343434] shadow-sm">
-          <span className="grid size-6 place-items-center rounded-lg bg-[#ffe1c4] text-[#d7650e]"><HugeiconsIcon icon={FlowConnectionIcon} size={14} strokeWidth={1.8} aria-hidden="true" /></span>
+      <div className="relative h-[210px] overflow-hidden rounded-[12px] border border-black/[0.09] bg-white p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(16,24,40,0.06),0_4px_10px_-2px_rgba(16,24,40,0.08),0_18px_30px_-14px_rgba(16,24,40,0.16)]">
+        <div className="absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-2 rounded-lg border border-black/[0.09] bg-white px-3 py-2 text-[11px] font-semibold text-[#1f1f1f] shadow-[0_1px_2px_rgba(16,24,40,0.08)]">
+          <span className="grid size-6 place-items-center rounded-md border border-[#f6cfa6] bg-[#fff1e2] text-[#c85a0b]"><HugeiconsIcon icon={FlowConnectionIcon} size={14} strokeWidth={1.8} aria-hidden="true" /></span>
           Orchestrator
         </div>
         <div className="absolute left-1/2 top-[54px] h-7 border-l border-dashed border-[#f1a86b]" />
@@ -45,8 +45,8 @@ const steps = [
         <div className="absolute right-[16.6667%] top-[81px] h-5 border-l border-dashed border-[#f1a86b]" />
         <div className="absolute inset-x-3 bottom-3 grid grid-cols-3 gap-2">
           {["Quality", "Security", "Performance"].map((label) => (
-            <div key={label} className="flex flex-col items-center gap-1 rounded-xl bg-[#fffaf5] px-2 py-2.5 text-center text-[10px] text-[#525866]">
-              <span className="grid size-6 place-items-center rounded-md bg-[#fff0df] text-[#e57620]"><HugeiconsIcon icon={BotIcon} size={13} strokeWidth={1.8} aria-hidden="true" /></span>
+            <div key={label} className="flex flex-col items-center gap-1 rounded-lg border border-black/[0.07] bg-white px-2 py-2.5 text-center text-[10px] font-medium text-[#3f4350] shadow-[0_1px_1px_rgba(16,24,40,0.04)]">
+              <span className="grid size-6 place-items-center rounded-md border border-[#f6cfa6] bg-[#fff1e2] text-[#c85a0b]"><HugeiconsIcon icon={BotIcon} size={13} strokeWidth={1.8} aria-hidden="true" /></span>
               <span>{label}</span>
               <span className="size-1.5 rounded-full bg-[#e57620]" />
             </div>
@@ -62,17 +62,17 @@ const steps = [
     tone: "bg-[#eaf8ee]",
     accent: "text-[#199653]",
     preview: (
-      <div className="space-y-4 rounded-2xl border border-[#d2eedc] bg-white p-5 shadow-[0_12px_35px_rgba(28,135,78,0.10)]">
-        <div className="flex items-center justify-between border-b border-[#e8ece9] pb-4 text-[11px] text-[#525866]">
+      <div className="space-y-4 rounded-[12px] border border-black/[0.09] bg-white p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(16,24,40,0.06),0_4px_10px_-2px_rgba(16,24,40,0.08),0_18px_30px_-14px_rgba(16,24,40,0.16)]">
+        <div className="flex items-center justify-between border-b border-black/[0.07] pb-4 text-[11px] font-medium text-[#3f4350]">
           <span className="flex items-center gap-2"><Image src="/companies/openmerge.png" alt="" width={22} height={22} className="size-[22px] rounded-md object-cover" />OpenMerge review</span>
           <span>PR #42</span>
         </div>
-        <div className="space-y-2.5 text-[11px] text-[#525866]">
+        <div className="space-y-2.5 text-[11px] text-[#3f4350]">
           <div className="flex items-center gap-2"><HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} strokeWidth={1.8} className="text-[#199653]" aria-hidden="true" />No blocking findings</div>
           <div className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-[#199653]" />Summary posted to the PR</div>
           <div className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-[#199653]" />Review history saved</div>
         </div>
-        <div className="flex items-center justify-between rounded-xl border border-[#cfe8d7] bg-[#f2fbf4] px-3 py-2.5 text-[11px] font-medium text-[#199653]">
+        <div className="flex items-center justify-between rounded-lg border border-[#b9e0c6] bg-[#effaf2] px-3 py-2.5 text-[11px] font-semibold text-[#177a44] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
           Looks good to merge
           <HugeiconsIcon icon={ArrowUpRight01Icon} size={14} strokeWidth={1.8} aria-hidden="true" />
         </div>

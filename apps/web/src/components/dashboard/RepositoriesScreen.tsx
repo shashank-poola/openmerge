@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowUpRight01Icon, Github01Icon, GitBranchIcon, LockKeyIcon, PlusSignIcon, Refresh01Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import { ArrowUpRight01Icon, GitBranchIcon, LockKeyIcon, PlusSignIcon, Refresh01Icon, Search01Icon } from "@hugeicons/core-free-icons";
 import { setRepositoryAutoReview, syncInstallation } from "@/lib/api";
 import { formatRelativeTime, GITHUB_INSTALL_URL, pluralize } from "@/lib/dashboard";
 import { cn } from "@/lib/utils";
 import { buttonStyles, DashboardIcon, DashboardLoading, EmptyPanel, ErrorPanel, InlineError, PageHeader } from "./DashboardPrimitives";
 import { useWorkspace } from "./WorkspaceProvider";
+import { GithubMark } from "@/components/ui/github-mark";
 
 type CoverageFilter = "ALL" | "ON" | "PAUSED";
 
@@ -134,8 +135,8 @@ export function RepositoriesScreen() {
               <section key={installation.id} className="om-rise overflow-hidden rounded-2xl border border-[#ebebe8] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
                 <header className="flex flex-col gap-3 border-b border-[#f0f0ee] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="grid size-9 place-items-center rounded-xl bg-[#171717] text-white">
-                      <DashboardIcon icon={Github01Icon} size={17} aria-hidden="true" />
+                    <span className="grid size-9 place-items-center rounded-xl border border-[#ebebe8] bg-white">
+                      <GithubMark size={20} />
                     </span>
                     <div>
                       <div className="flex flex-wrap items-center gap-2">

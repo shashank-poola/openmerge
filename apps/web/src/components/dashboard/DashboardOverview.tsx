@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   ArrowRight02Icon,
   ArrowUpRight01Icon,
-  Github01Icon,
   GitPullRequestIcon,
   Refresh01Icon,
 } from "@hugeicons/core-free-icons";
@@ -25,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { buttonStyles, DashboardIcon, DashboardLoading, EmptyPanel, ErrorPanel, InlineError, Panel, StatusDot } from "./DashboardPrimitives";
 import { useWorkspace } from "./WorkspaceProvider";
+import { GithubMark } from "@/components/ui/github-mark";
 
 export function DashboardOverview() {
   const { data, summary, user, loading, refreshing, error, reload } = useWorkspace();
@@ -261,7 +261,7 @@ function PipelineCard({ summary }: { summary: WorkspaceSummary }) {
       {installation ? (
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#f0f0ee] pt-3.5 text-[12px]">
           <span className="flex min-w-0 items-center gap-2 text-[#6b6b67]">
-            <DashboardIcon icon={Github01Icon} size={15} aria-hidden="true" />
+            <GithubMark size={15} className="opacity-70" />
             <span className="truncate">
               {installation.githubAccountLogin} · {pluralize(summary.repositories.length, "repo")} watched
             </span>

@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight02Icon, BookOpen01Icon, ExternalLinkIcon, Github01Icon, Logout01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight02Icon, BookOpen01Icon, ExternalLinkIcon, Logout01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
 import { pluralize } from "@/lib/dashboard";
 import { buttonStyles, DashboardIcon, DashboardLoading, ErrorPanel, InlineError, PageHeader, Panel } from "./DashboardPrimitives";
 import { useWorkspace } from "./WorkspaceProvider";
+import { GithubMark } from "@/components/ui/github-mark";
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -60,8 +61,8 @@ export function SettingsScreen() {
             {installations.map((installation) => (
               <li key={installation.id} className="flex flex-col gap-3 border-b border-[#f4f4f2] px-5 py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="grid size-9 place-items-center rounded-xl bg-[#171717] text-white">
-                    <DashboardIcon icon={Github01Icon} size={17} aria-hidden="true" />
+                  <span className="grid size-9 place-items-center rounded-xl border border-[#ebebe8] bg-white">
+                    <GithubMark size={20} />
                   </span>
                   <div>
                     <p className="text-[13px] font-medium">{installation.githubAccountLogin}</p>
