@@ -221,3 +221,88 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+/* Workspace (dashboard + onboarding) motion */
+.om-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: #f0f0ee;
+}
+
+.om-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: om-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes om-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.om-rise {
+  animation: om-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes om-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.om-ping {
+  animation: om-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes om-ping {
+  75%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.om-dot-grid {
+  background-image: radial-gradient(circle at 1px 1px, #d9d9d5 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+.om-text-shine {
+  background: linear-gradient(90deg, #171717 0%, #171717 40%, #9a9a95 50%, #171717 60%, #171717 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: om-text-shine 2.4s linear infinite;
+}
+
+@keyframes om-text-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .om-shimmer::after,
+  .om-rise,
+  .om-ping,
+  .om-text-shine {
+    animation: none !important;
+  }
+
+  .om-text-shine {
+    color: #171717;
+  }
+}

@@ -1,35 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { BookOpen01Icon, ExternalLinkIcon, GitBranchIcon, Logout01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
 import { useRouter } from "next/navigation";
-import { getDashboard } from "@/lib/api";
-import type { DashboardResponse } from "@/types/dashboard";
-import { DashboardIcon, DashboardLoading, EmptyPanel } from "./DashboardPrimitives";
+import { ArrowRight02Icon, BookOpen01Icon, ExternalLinkIcon, Logout01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
+import { pluralize } from "@/lib/dashboard";
+import { buttonStyles, DashboardIcon, DashboardLoading, ErrorPanel, InlineError, PageHeader, Panel } from "./DashboardPrimitives";
+import { useWorkspace } from "./WorkspaceProvider";
+import { GithubMark } from "@/components/ui/github-mark";
 
 export function SettingsScreen() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    try {
-      const nextData = await getDashboard();
-      setData(nextData);
-      setError(null);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Could not load workspace settings.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadDashboard();
-  }, [loadDashboard]);
+  const { data, user, loading, error, reload } = useWorkspace();
 
   function signOut() {
     window.localStorage.removeItem("pr_token");
@@ -41,42 +23,97 @@ export function SettingsScreen() {
   }
 
   if (error && !data) {
-    return <EmptyPanel title="Settings are unavailable" description="Check that the OpenMerge API is running, then try again." action={<button onClick={() => void loadDashboard()} type="button" className="rounded-full bg-[#20201e] px-4 py-2.5 text-[12px] font-semibold text-white">Try again</button>} />;
+    return <ErrorPanel error={error} title="Settings are unavailable" onRetry={() => void reload()} />;
   }
 
+  const installations = data?.installations ?? [];
+
   return (
-    <div className="max-w-4xl space-y-7">
-      <section>
-        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#2764d8]">Workspace settings</p>
-        <h1 className="mt-2 text-[32px] font-semibold leading-none tracking-[-0.06em] text-[#20201e] sm:text-[38px]">Your OpenMerge connection.</h1>
-        <p className="mt-3 max-w-xl text-[14px] leading-6 text-[#73736e]">Manage GitHub App access and find the essentials for your review workspace.</p>
-      </section>
+    <div className="max-w-3xl space-y-6">
+      <PageHeader title="Settings" description="Your account, GitHub App access, and session." />
 
-      {error ? <div className="rounded-2xl border border-[#f2d1d1] bg-[#fff6f6] px-4 py-3 text-[13px] text-[#a53d3d]">Showing your last loaded settings. Refresh failed: {error}</div> : null}
+      {error ? <InlineError>Showing your last loaded settings. Refresh failed: {error}</InlineError> : null}
 
-      <section className="overflow-hidden rounded-2xl border border-[#e5e5e0] bg-white shadow-[0_8px_24px_rgba(23,23,23,0.035)]">
-        <div className="border-b border-[#ecece7] px-5 py-4 sm:px-6"><h2 className="text-[15px] font-semibold tracking-[-0.025em]">Connected GitHub accounts</h2><p className="mt-1 text-[12px] text-[#83837d]">OpenMerge can only review repositories granted through a GitHub App installation.</p></div>
-        {data?.installations.length ? (
-          <div className="divide-y divide-[#efefeb]">
-            {data.installations.map((installation) => (
-              <div key={installation.id} className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div className="flex items-start gap-3"><span className="grid size-10 place-items-center rounded-xl bg-[#edf3ff] text-[#2764d8]"><DashboardIcon icon={GitBranchIcon} size={19} aria-hidden="true" /></span><div><p className="text-[13px] font-semibold text-[#33332f]">{installation.githubAccountLogin}</p><p className="mt-1 text-[12px] text-[#85857f]">{installation.githubAccountType} account · {installation.repositories.length} active {installation.repositories.length === 1 ? "repository" : "repositories"}</p></div></div>
-                <a href="https://github.com/settings/installations" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 self-start rounded-full border border-[#ddddD7] bg-white px-3.5 py-2 text-[12px] font-semibold text-[#4b4b46] transition-colors hover:border-[#bfbfb8] hover:bg-[#f7f7f4] sm:self-auto">Manage on GitHub <DashboardIcon icon={ExternalLinkIcon} size={14} aria-hidden="true" /></a>
-              </div>
-            ))}
+      {user ? (
+        <Panel className="om-rise" bodyClassName="flex items-center gap-4 p-5">
+          {user.avatarUrl ? (
+            <Image src={user.avatarUrl} alt="" width={48} height={48} className="size-12 rounded-full" />
+          ) : (
+            <span className="grid size-12 place-items-center rounded-full bg-[#2764d8] text-[16px] font-semibold text-white">{(user.name || user.githubLogin)[0]?.toUpperCase()}</span>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-semibold tracking-[-0.01em]">{user.name || user.githubLogin}</p>
+            <p className="truncate text-[12.5px] text-[#8a8a85]">
+              @{user.githubLogin}
+              {user.email ? ` · ${user.email}` : null}
+            </p>
           </div>
-        ) : <div className="px-6 py-12 text-center text-[13px] text-[#777771]">No GitHub App installations are connected yet.</div>}
-      </section>
+          <a href={`https://github.com/${user.githubLogin}`} target="_blank" rel="noreferrer" className={buttonStyles.secondary}>
+            GitHub profile
+            <DashboardIcon icon={ExternalLinkIcon} size={14} aria-hidden="true" />
+          </a>
+        </Panel>
+      ) : null}
 
-      <section className="grid gap-5 sm:grid-cols-2">
-        <div className="rounded-2xl border border-[#e5e5e0] bg-white p-5 shadow-[0_8px_24px_rgba(23,23,23,0.035)]"><span className="grid size-10 place-items-center rounded-xl bg-[#edf9f1] text-[#198b4d]"><DashboardIcon icon={Shield01Icon} size={19} aria-hidden="true" /></span><h2 className="mt-5 text-[15px] font-semibold tracking-[-0.025em]">Repository access</h2><p className="mt-2 text-[13px] leading-6 text-[#74746f]">Repository selection and GitHub App permissions are managed securely in GitHub. Sync OpenMerge after you change access.</p><Link href="/dashboard/repositories" className="mt-5 inline-flex text-[12px] font-semibold text-[#2764d8] hover:text-[#174cae]">Manage repositories →</Link></div>
-        <div className="rounded-2xl border border-[#e5e5e0] bg-white p-5 shadow-[0_8px_24px_rgba(23,23,23,0.035)]"><span className="grid size-10 place-items-center rounded-xl bg-[#fff5e9] text-[#b65b07]"><DashboardIcon icon={BookOpen01Icon} size={19} aria-hidden="true" /></span><h2 className="mt-5 text-[15px] font-semibold tracking-[-0.025em]">Need help?</h2><p className="mt-2 text-[13px] leading-6 text-[#74746f]">Read the setup guide to understand how installations, webhooks, and automatic reviews work.</p><Link href="/docs" className="mt-5 inline-flex text-[12px] font-semibold text-[#2764d8] hover:text-[#174cae]">Open documentation →</Link></div>
-      </section>
+      <Panel title="Connected GitHub accounts" description="OpenMerge reviews only repositories granted through a GitHub App installation." className="om-rise">
+        {installations.length ? (
+          <ul className="border-t border-[#f0f0ee]">
+            {installations.map((installation) => (
+              <li key={installation.id} className="flex flex-col gap-3 border-b border-[#f4f4f2] px-5 py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-9 place-items-center rounded-xl border border-[#ebebe8] bg-white">
+                    <GithubMark size={20} />
+                  </span>
+                  <div>
+                    <p className="text-[13px] font-medium">{installation.githubAccountLogin}</p>
+                    <p className="mt-0.5 text-[12px] text-[#8a8a85]">
+                      {installation.githubAccountType} account · {pluralize(installation.repositories.length, "active repository", "active repositories")}
+                    </p>
+                  </div>
+                </div>
+                <a href="https://github.com/settings/installations" target="_blank" rel="noreferrer" className={buttonStyles.secondary}>
+                  Manage on GitHub
+                  <DashboardIcon icon={ExternalLinkIcon} size={14} aria-hidden="true" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="border-t border-[#f0f0ee] px-6 py-10 text-center text-[13px] text-[#8a8a85]">No GitHub App installations are connected yet.</p>
+        )}
+      </Panel>
 
-      <section className="rounded-2xl border border-[#f0dddd] bg-[#fffafa] p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
-        <div><h2 className="text-[14px] font-semibold text-[#4d3434]">Sign out of this browser</h2><p className="mt-1 text-[12px] leading-5 text-[#8e6666]">This removes the local OpenMerge session from this device. It does not uninstall the GitHub App.</p></div>
-        <button onClick={signOut} type="button" className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-[#eacccc] bg-white px-3.5 text-[12px] font-semibold text-[#a23c3c] transition-colors hover:bg-[#fff1f1] sm:mt-0"><DashboardIcon icon={Logout01Icon} size={14} aria-hidden="true" />Sign out</button>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <HelpCard icon={Shield01Icon} title="Repository access" body="Repository selection and permissions live in GitHub. Sync OpenMerge after you change access." href="/dashboard/repositories" cta="Manage repositories" />
+        <HelpCard icon={BookOpen01Icon} title="Documentation" body="How installations, webhooks, and automatic reviews fit together." href="/docs" cta="Open the docs" />
+      </div>
+
+      <section className="om-rise flex flex-col gap-4 rounded-2xl border border-[#f1d6d3] bg-[#fdf8f7] p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-[14px] font-semibold text-[#5c2b26]">Sign out of this browser</h2>
+          <p className="mt-1 text-[12.5px] leading-5 text-[#8f5b55]">Removes the local session from this device. The GitHub App stays installed.</p>
+        </div>
+        <button onClick={signOut} type="button" className="inline-flex h-9 shrink-0 items-center gap-2 self-start rounded-lg border border-[#ecc9c5] bg-white px-3.5 text-[13px] font-medium text-[#b42f2f] transition-colors hover:bg-[#fdf1f0] sm:self-auto">
+          <DashboardIcon icon={Logout01Icon} size={14} aria-hidden="true" />
+          Sign out
+        </button>
       </section>
     </div>
+  );
+}
+
+function HelpCard({ icon, title, body, href, cta }: { icon: typeof Shield01Icon; title: string; body: string; href: string; cta: string }) {
+  return (
+    <Link href={href} className="om-rise group rounded-2xl border border-[#ebebe8] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-[#dcdcd8]">
+      <span className="grid size-9 place-items-center rounded-xl border border-[#ebebe8] text-[#3f3f3c]">
+        <DashboardIcon icon={icon} size={17} aria-hidden="true" />
+      </span>
+      <h2 className="mt-4 text-[14px] font-semibold tracking-[-0.01em]">{title}</h2>
+      <p className="mt-1.5 text-[12.5px] leading-5 text-[#6b6b67]">{body}</p>
+      <span className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[#171717]">
+        {cta}
+        <DashboardIcon icon={ArrowRight02Icon} size={13} className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+      </span>
+    </Link>
   );
 }
