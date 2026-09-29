@@ -8,6 +8,7 @@ import { parseRedisUrl, resolveRedisUrl } from "./worker.utils";
 import { processReviewJob } from "./review.worker";
 import { REVIEW_RECOVERY_INTERVAL_MS } from "./review.constants";
 import { recoverReviewSessions } from "./review.recovery";
+import { shutdownLangfuse } from "../../server/src/observability/langfuse";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPaths = [
@@ -70,6 +71,7 @@ const shutdown = async (signal: string) => {
   } catch (error) {
     console.error("[worker] failed to close cleanly:", error);
   } finally {
+    await shutdownLangfuse();
     process.exit(0);
   }
 };

@@ -150,6 +150,13 @@ bun run dev
 
 The API validates its environment at startup and exits with a clear message if a required variable is missing.
 
+### Observability (optional)
+
+Set `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` (plus `LANGFUSE_BASE_URL` and, if you like, `LANGFUSE_TRACING_ENVIRONMENT`) to send model traces, token usage, and latency for every review to [Langfuse](https://langfuse.com). Tracing stays off when the keys are absent, and a tracing failure never fails a review.
+
+> [!WARNING]
+> Traces contain the prompts sent to the model, which include the reviewed diff and surrounding source. Point `LANGFUSE_BASE_URL` at a self-hosted Langfuse instance when reviewed code must not leave your infrastructure, or leave the keys unset to disable tracing.
+
 ### Configure your GitHub App
 
 | Setting | Value |
@@ -192,6 +199,7 @@ openmerge/
 | Review pipeline | [LangGraph](https://langchain-ai.github.io/langgraphjs/), Gemini (optional) with Groq fallback |
 | Queue | [BullMQ](https://bullmq.io) on Redis |
 | Database | PostgreSQL with [Prisma](https://www.prisma.io) 7 |
+| Observability | [Langfuse](https://langfuse.com) via OpenTelemetry (optional) |
 | Tooling | [Bun](https://bun.sh), [Turborepo](https://turbo.build), TypeScript |
 
 ## Development

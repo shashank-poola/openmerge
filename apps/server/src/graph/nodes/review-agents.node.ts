@@ -3,6 +3,7 @@ import { runCodeAgent } from "../../agent/code.agent";
 import { runSecurityAgent } from "../../agent/security.agent";
 import { runPerformanceAgent } from "../../agent/performance.agent";
 import type { AgentInput } from "../../agent/agent.types";
+import { reviewTraceOptions } from "../review-trace";
 
 const MAX_DIFF_CHARS = 28_000;
 
@@ -24,18 +25,18 @@ const buildInput = (state: PRReviewStateType): AgentInput => ({
 
 export const codeReviewAgent = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
     if (!state.diff || state.error) return {};
-    const result = await runCodeAgent(buildInput(state));
+    const result = await runCodeAgent(buildInput(state), reviewTraceOptions(state));
     return { codeComments: result.comments };
 };
 
 export const securityAgent = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
     if (!state.diff || state.error) return {};
-    const result = await runSecurityAgent(buildInput(state));
+    const result = await runSecurityAgent(buildInput(state), reviewTraceOptions(state));
     return { securityComments: result.comments };
 };
 
 export const performanceAgent = async (state: PRReviewStateType): Promise<Partial<PRReviewStateType>> => {
     if (!state.diff || state.error) return {};
-    const result = await runPerformanceAgent(buildInput(state));
+    const result = await runPerformanceAgent(buildInput(state), reviewTraceOptions(state));
     return { performanceComments: result.comments };
 };

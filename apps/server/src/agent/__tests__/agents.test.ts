@@ -74,7 +74,11 @@ describe("review agents", () => {
     const result = await runCodeAgent(input);
 
     expect(invokeLLMMock).toHaveBeenCalledTimes(1);
-    expect(invokeLLMMock).toHaveBeenCalledWith(expect.arrayContaining([]), "codeReview");
+    expect(invokeLLMMock).toHaveBeenCalledWith(
+      expect.arrayContaining([]),
+      "codeReview",
+      expect.objectContaining({ runName: "codeAgent" }),
+    );
     expect(result).toMatchObject({ agentName: "codeAgent", provider: "groq" });
     expect(result.comments).toHaveLength(1);
     expect(result.comments[0]).toMatchObject({ filePath: "src/index.ts", severity: "HIGH" });
@@ -85,7 +89,11 @@ describe("review agents", () => {
     const result = await runSecurityAgent(input);
 
     expect(invokeLLMMock).toHaveBeenCalledTimes(1);
-    expect(invokeLLMMock).toHaveBeenCalledWith(expect.arrayContaining([]), "security");
+    expect(invokeLLMMock).toHaveBeenCalledWith(
+      expect.arrayContaining([]),
+      "security",
+      expect.objectContaining({ runName: "securityAgent" }),
+    );
     expect(result).toMatchObject({ agentName: "securityAgent", provider: "groq" });
     expect(result.comments).toHaveLength(1);
   });
@@ -94,7 +102,11 @@ describe("review agents", () => {
     const result = await runPerformanceAgent(input);
 
     expect(invokeLLMMock).toHaveBeenCalledTimes(1);
-    expect(invokeLLMMock).toHaveBeenCalledWith(expect.arrayContaining([]), "performance");
+    expect(invokeLLMMock).toHaveBeenCalledWith(
+      expect.arrayContaining([]),
+      "performance",
+      expect.objectContaining({ runName: "performanceAgent" }),
+    );
     expect(result).toMatchObject({ agentName: "performanceAgent", provider: "groq" });
     expect(result.comments).toHaveLength(1);
   });

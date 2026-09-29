@@ -1,9 +1,13 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { invokeLLM } from "../llm/llm.provider";
+import { agentTrace, type LLMTraceOptions } from "../llm/llm.trace";
 import { CODE_REVIEW_SYSTEM, CODE_REVIEW_HUMAN } from "../prompts/code-review.prompt";
 import { parseAgentComments, type AgentInput, type AgentResult } from "./agent.types";
 
-export const runCodeAgent = async (input: AgentInput): Promise<AgentResult> => {
+export const runCodeAgent = async (
+    input: AgentInput,
+    trace?: LLMTraceOptions
+): Promise<AgentResult> => {
     const start = Date.now();
     try {
         const { content, provider } = await invokeLLM(
@@ -11,7 +15,8 @@ export const runCodeAgent = async (input: AgentInput): Promise<AgentResult> => {
                 new SystemMessage(CODE_REVIEW_SYSTEM),
                 new HumanMessage(CODE_REVIEW_HUMAN(input)),
             ],
-            "codeReview"
+            "codeReview",
+            agentTrace("codeAgent", "agent:code", trace)
         );
         return {
             agentName: "codeAgent",
