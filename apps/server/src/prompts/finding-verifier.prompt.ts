@@ -19,7 +19,7 @@ A changed function call is not itself a bug. A security claim needs an evidenced
 Return one strict JSON object with this shape and no prose:
 {"verdicts":[{"candidateId":"...","verdict":"keep","severity":"MEDIUM","body":"...","evidence":[{"snippetId":"...","quote":"exact quote"}],"preserveSuggestion":false},{"candidateId":"...","verdict":"suppress","reasonCode":"speculative"}]}
 
-Return exactly one verdict for every candidate. Never add a candidate, move its location, change its category, or increase its severity. Evidence quotes must occur exactly in supplied snippets.`;
+Return exactly one verdict for every candidate. Never add a candidate, move its location, change its category, or increase its severity. Each evidence quote must contain one complete supplied source line. You can omit a leading diff marker such as + or a source line-number prefix.`;
 
 export const FINDING_VERIFIER_HUMAN = (
   candidates: FindingCandidate[],

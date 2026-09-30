@@ -45,11 +45,21 @@ export const prepareCandidates = (
         continue;
       }
 
-      const diffEvidence = selection.index.files
+      const groundedHunk = selection.index.files
         .flatMap((file) => file.hunks)
-        .find((hunk) => hunk.id === grounding.hunkId)
-        ?.rendered;
-      candidates.push({ id: candidateId(sourceAgent, comment), sourceAgent, comment, diffEvidence });
+        .find((hunk) => hunk.id === grounding.hunkId);
+      const diffEvidenceAnchorIndex = groundedHunk?.lines.findIndex(
+        (line) => line.kind === "added" && line.newLine === grounding.startLine,
+      );
+      candidates.push({
+        id: candidateId(sourceAgent, comment),
+        sourceAgent,
+        comment,
+        diffEvidence: groundedHunk?.rendered,
+        diffEvidenceAnchorIndex: diffEvidenceAnchorIndex === undefined || diffEvidenceAnchorIndex < 0
+          ? undefined
+          : diffEvidenceAnchorIndex + 1,
+      });
     }
   }
 

@@ -58,4 +58,30 @@ describe("parseVerifierResponse", () => {
 
     expect(result.ok).toBe(false);
   });
+
+  test("accepts a whole changed line without its diff prefix and rejects a substring", () => {
+    const renderedHunk = [{
+      ...snippets[0]!,
+      text: "@@ -3,1 +3,1 @@\n-  oldTask();\n+  runTask();",
+    }];
+    const accepted = parseVerifierResponse(JSON.stringify({ verdicts: [{
+      candidateId: "candidate-1",
+      verdict: "keep",
+      severity: "MEDIUM",
+      body: "Confirmed defect.",
+      evidence: [{ snippetId: "candidate-1:diff", quote: "runTask();" }],
+      preserveSuggestion: false,
+    }] }), candidates, renderedHunk);
+    const rejected = parseVerifierResponse(JSON.stringify({ verdicts: [{
+      candidateId: "candidate-1",
+      verdict: "keep",
+      severity: "MEDIUM",
+      body: "Confirmed defect.",
+      evidence: [{ snippetId: "candidate-1:diff", quote: "runTask" }],
+      preserveSuggestion: false,
+    }] }), candidates, renderedHunk);
+
+    expect(accepted.ok).toBe(true);
+    expect(rejected.ok).toBe(false);
+  });
 });

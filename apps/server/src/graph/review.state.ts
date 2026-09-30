@@ -116,7 +116,7 @@ export const PRReviewState = Annotation.Root({
     }),
 
     error: Annotation<string | null>({
-        value: (prev, next) => prev ?? next,
+        value: (prev, next) => next === "REVIEW_OWNERSHIP_LOST" ? next : prev ?? next,
         default: () => null,
     }),
 });

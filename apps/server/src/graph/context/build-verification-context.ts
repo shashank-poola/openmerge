@@ -12,7 +12,7 @@ const boundedDiffEvidence = (candidate: FindingCandidate): string => {
   if (!candidate.diffEvidence) return fallback;
   const lines = candidate.diffEvidence.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
   const anchor = `+${fallback.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n")[0] ?? ""}`;
-  const anchorIndex = lines.indexOf(anchor);
+  const anchorIndex = candidate.diffEvidenceAnchorIndex ?? lines.indexOf(anchor);
   if (anchorIndex < 0) return fallback;
   const start = Math.max(0, anchorIndex - WINDOW_LINES);
   const end = Math.min(lines.length, anchorIndex + WINDOW_LINES + 1);

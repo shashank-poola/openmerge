@@ -8,6 +8,7 @@ export type FindingCandidate = {
   sourceAgent: FindingSourceAgent;
   comment: AgentComment;
   diffEvidence?: string;
+  diffEvidenceAnchorIndex?: number;
 };
 
 export type EvidenceSnippet = {
@@ -21,8 +22,22 @@ export type EvidenceSnippet = {
 
 const evidenceSchema = z.object({
   snippetId: z.string().min(1).max(120),
-  quote: z.string().min(1).max(2_000).refine((value) => value.trim().length > 0),
+  quote: z.string().min(1).max(2_000)
+    .refine((value) => value.trim().length > 0)
+    .refine((value) => !value.includes("\n") && !value.includes("\r")),
 }).strict();
+
+const quoteVariants = (line: string): Set<string> => new Set([
+  line.trim(),
+  line.replace(/^\d+:\s?/, "").trim(),
+  line.replace(/^[+\- ]/, "").trim(),
+]);
+
+const normalizeSnippetLine = (line: string, source: EvidenceSnippet["source"]): string => (
+  source === "diff"
+    ? line.replace(/^[+\- ]/, "")
+    : line.replace(/^\d+:\s?/, "")
+).trim();
 
 const keptVerdictSchema = z.object({
   candidateId: z.string().min(1).max(120),
@@ -100,18 +115,21 @@ export const parseVerifierResponse = (
       let hasChangedCodeEvidence = false;
       const candidate = candidates.find((entry) => entry.id === verdict.candidateId);
       const currentCodeLines = new Set(
-        candidate?.comment.currentCode?.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n") ?? [],
+        (candidate?.comment.currentCode?.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n") ?? [])
+          .map((line) => line.trim()),
       );
       for (const evidence of verdict.evidence) {
         const snippet = snippetsById.get(evidence.snippetId);
-        const exactSnippetLine = snippet?.text.split("\n").includes(evidence.quote) ?? false;
+        const variants = quoteVariants(evidence.quote);
+        const matchedLine = snippet?.text
+          .split("\n")
+          .map((line) => normalizeSnippetLine(line, snippet.source))
+          .find((line) => variants.has(line));
+        const exactSnippetLine = matchedLine !== undefined;
         if (!snippet || !evidence.snippetId.startsWith(`${verdict.candidateId}:`) || !exactSnippetLine) {
           return { ok: false, error: "verifier returned unsupported evidence" };
         }
-        const quotedChangedLine = evidence.quote.startsWith("+") && !evidence.quote.startsWith("+++")
-          ? evidence.quote.slice(1)
-          : evidence.quote;
-        if (snippet.source === "diff" && currentCodeLines.has(quotedChangedLine)) hasChangedCodeEvidence = true;
+        if (snippet.source === "diff" && matchedLine && currentCodeLines.has(matchedLine)) hasChangedCodeEvidence = true;
       }
       if (!hasChangedCodeEvidence) return { ok: false, error: "verifier did not cite changed code" };
     }

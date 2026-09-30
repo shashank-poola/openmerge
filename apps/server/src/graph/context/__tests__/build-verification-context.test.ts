@@ -76,4 +76,18 @@ describe("buildVerificationContext", () => {
     expect(snippets).toHaveLength(1);
     expect(JSON.stringify(snippets)).not.toContain("secret-installation-token");
   });
+
+  test("uses the grounded line index when a hunk repeats the same source text", async () => {
+    const repeated = candidate("src/review.ts");
+    const hunkLines = ["@@ -1,30 +1,30 @@", "+changed();"];
+    for (let index = 2; index < 25; index += 1) hunkLines.push(` context-${index}`);
+    hunkLines.push("+changed();", " unique-second-location");
+    repeated.diffEvidence = hunkLines.join("\n");
+    repeated.diffEvidenceAnchorIndex = 25;
+
+    const snippets = await buildVerificationContext([repeated], null);
+
+    expect(snippets[0]?.text).toContain("unique-second-location");
+    expect(snippets[0]?.text).not.toContain("@@ -1,30 +1,30 @@");
+  });
 });
