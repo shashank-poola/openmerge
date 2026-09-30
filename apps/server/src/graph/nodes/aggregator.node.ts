@@ -11,15 +11,18 @@ const SEVERITY_RANK: Record<AgentComment["severity"], number> = {
 const MAX_COMMENTS = 12;
 
 export const aggregateComments = (state: PRReviewStateType): Partial<PRReviewStateType> => {
-    const all = [
-        ...state.codeComments,
-        ...state.securityComments,
-        ...state.performanceComments,
-    ];
+    const all = state.verifiedComments;
 
     const seen = new Set<string>();
     const deduped = all.filter((c) => {
-        const key = `${c.filePath}:${c.line}:${c.body.slice(0, 60)}`;
+        const key = JSON.stringify([
+            c.filePath,
+            c.startLine ?? c.line,
+            c.line,
+            c.category,
+            c.currentCode?.replace(/\r\n/g, "\n").replace(/\r/g, "\n") ?? "",
+            c.body.trim(),
+        ]);
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -29,10 +32,19 @@ export const aggregateComments = (state: PRReviewStateType): Partial<PRReviewSta
         (a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]
     );
 
-    // Prioritize blocking comments, then cap total
-    const blocking = sorted.filter((c) => c.blocking !== false && SEVERITY_RANK[c.severity] >= 4);
-    const rest = sorted.filter((c) => !blocking.includes(c));
-    const capped = [...blocking, ...rest].slice(0, MAX_COMMENTS);
+    const capped = sorted
+        .map((comment) => ({
+            ...comment,
+            blocking: comment.severity === "CRITICAL" || comment.severity === "HIGH",
+        }))
+        .sort((a, b) =>
+            SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]
+            || a.filePath.localeCompare(b.filePath)
+            || a.line - b.line
+            || a.category.localeCompare(b.category)
+            || a.body.localeCompare(b.body)
+        )
+        .slice(0, MAX_COMMENTS);
 
     return { allComments: capped };
 };

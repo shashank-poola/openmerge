@@ -19,4 +19,5 @@ export const groqForTask = (task: keyof typeof GROQ_DEFAULTS) =>
         apiKey: env.GROQ_API_KEY,
         model: GROQ_DEFAULTS[task],
         temperature: 0.1,
+        ...(task === "verification" ? { maxTokens: 6_000, maxRetries: 0 } : {}),
     });

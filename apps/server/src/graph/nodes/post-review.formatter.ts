@@ -37,7 +37,8 @@ const SEVERITY_ORDER: AgentComment["severity"][] = ["CRITICAL", "HIGH", "MEDIUM"
 type SectionData = { emoji: string; label: string; singular: string; items: AgentComment[] };
 
 const plural = (n: number, word: string) => `${n} ${word}${n !== 1 ? "s" : ""}`;
-const countBlocking = (items: AgentComment[]) => items.filter((comment) => comment.blocking).length;
+const isBlocking = (comment: AgentComment) => comment.severity === "CRITICAL" || comment.severity === "HIGH";
+const countBlocking = (items: AgentComment[]) => items.filter(isBlocking).length;
 const clip = (text: string, max: number) => text.length > max ? `${text.slice(0, max - 3)}…` : text;
 const firstSentence = (text: string) => text.split(/\.\s+/)[0]?.trim() ?? text;
 const endWithPeriod = (text: string) => {
@@ -59,7 +60,7 @@ const prTitleTag = (title: string | null): string => {
 
 const buildSummaryLine = (fileCount: number, comments: AgentComment[]): string => {
   const files = plural(fileCount, "file");
-  if (comments.length === 0) return `Reviewed **${files}** - no issues found.`;
+  if (comments.length === 0) return `Reviewed **${files}** - no verified actionable findings.`;
   const blocking = countBlocking(comments);
   const blockingPart = blocking > 0 ? ` · **${blocking} blocking**` : "";
   return `Reviewed **${files}** · **${plural(comments.length, "issue")}**${blockingPart}`;
@@ -73,7 +74,7 @@ const buildSectionIntro = (singular: string, items: AgentComment[]): string => {
 };
 
 const renderItem = (comment: AgentComment): string[] => {
-  const blockingBadge = comment.blocking ? " · **blocking**" : "";
+  const blockingBadge = isBlocking(comment) ? " · **blocking**" : "";
   const body = endWithPeriod(sanitizeMarkdownText(firstSentence(comment.body), 100));
   const lines = [`- \`${sanitizeInlineCode(comment.filePath, 220)}:${comment.line}\`${blockingBadge} - ${body}`];
 
@@ -134,7 +135,9 @@ export const buildReviewComment = (
     ? "⛔ **Changes requested**. Blocking issues must be resolved before merging."
     : comments.length > 0
       ? "⚠️ **Review complete**. Non-blocking suggestions noted."
-      : "✅ **Looks good to merge!**";
+      : state.reviewCoverage === "limited"
+        ? "⚠️ **Review incomplete**. OpenMerge did not publish unverified findings."
+        : "✅ **Review complete**. No verified actionable findings were found.";
   const filesNeedingAttention = [...new Set(comments.map((comment) => comment.filePath))].slice(0, 5);
   const fallbackSummary: ReviewSummary = {
     overview: comments.length === 0
@@ -146,12 +149,16 @@ export const buildReviewComment = (
       ? [`Updates ${plural(state.changedFiles.length, "changed file")}.`]
       : [`Introduces ${plural(comments.length, "review finding")}.`],
     mergeAssessment: comments.length === 0
-      ? "No actionable issues were detected."
+      ? state.reviewCoverage === "limited"
+        ? "The available evidence did not support a complete automated review."
+        : "No verified actionable findings were detected."
       : blockingCount > 0
         ? "The PR is not yet safe to merge."
         : "No blocking issues were detected.",
     mergeReason: comments.length === 0
-      ? "No blocking issues were found in the changed code."
+      ? state.reviewCoverage === "limited"
+        ? "Some candidates or review coverage could not be verified."
+        : "No verified blocking issues were found in the reviewed changes."
       : blockingCount > 0
         ? "Blocking findings require attention before merging."
         : "The remaining findings are non-blocking suggestions.",
@@ -170,8 +177,10 @@ export const buildReviewComment = (
     lines.push(
       verdict,
       "",
-      "No actionable issues found in " + plural(state.changedFiles.length, "changed file") + ".",
-      "No blocking issues detected.",
+      state.reviewCoverage === "limited"
+        ? "Some review coverage was unavailable. Unverified findings were suppressed."
+        : "No verified actionable findings found in " + plural(state.changedFiles.length, "changed file") + ".",
+      "This automated review is not proof that the change is safe to merge.",
       "",
     );
   } else {

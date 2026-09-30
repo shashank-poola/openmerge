@@ -12,6 +12,7 @@ const buildConfig = (task: Task, provider: "groq" | "gemini", options?: LLMTrace
     tags: [`task:${task}`, `provider:${provider}`, ...(options?.tags ?? [])],
     metadata: { task, provider, ...(options?.metadata ?? {}) },
     callbacks: langfuseCallbacks(),
+    signal: options?.signal,
 });
 
 export const invokeLLM = async (
@@ -27,6 +28,7 @@ export const invokeLLM = async (
             );
             return { content: response.content as string, provider: "gemini" };
         } catch (err) {
+            if (options?.signal?.aborted) throw err;
             console.warn(`Gemini failed for [${task}], falling back to Groq:`, (err as Error).message);
         }
     }
