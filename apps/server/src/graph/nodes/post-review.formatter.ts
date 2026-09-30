@@ -133,10 +133,10 @@ export const buildReviewComment = (
   const durationSec = (durationMs / 1000).toFixed(1);
   const verdict = blockingCount > 0
     ? "⛔ **Changes requested**. Blocking issues must be resolved before merging."
-    : comments.length > 0
-      ? "⚠️ **Review complete**. Non-blocking suggestions noted."
-      : state.reviewCoverage === "limited"
-        ? "⚠️ **Review incomplete**. OpenMerge did not publish unverified findings."
+    : state.reviewCoverage === "limited"
+      ? "⚠️ **Review incomplete**. OpenMerge did not publish unverified findings."
+      : comments.length > 0
+        ? "⚠️ **Review complete**. Non-blocking suggestions noted."
         : "✅ **Review complete**. No verified actionable findings were found.";
   const filesNeedingAttention = [...new Set(comments.map((comment) => comment.filePath))].slice(0, 5);
   const fallbackSummary: ReviewSummary = {
@@ -164,10 +164,13 @@ export const buildReviewComment = (
         : "The remaining findings are non-blocking suggestions.",
   };
   const summary = reviewSummary ?? fallbackSummary;
+  const overview = state.reviewCoverage === "limited"
+    ? `${fallbackSummary.overview} Automated review coverage was incomplete.`
+    : summary.overview;
   const lines: string[] = [
     `## OpenMerge Summary${prTitleTag(state.prTitle)}`,
     "",
-    endWithPeriod(sanitizeMarkdownText(summary.overview, 240)),
+    endWithPeriod(sanitizeMarkdownText(overview, 240)),
     "",
     ...summary.bullets.slice(0, 4).map((bullet) => `- ${endWithPeriod(sanitizeMarkdownText(bullet, 180))}`),
     "",
@@ -186,9 +189,13 @@ export const buildReviewComment = (
   } else {
     const mergeAssessment = blockingCount > 0
       ? `The PR is not yet safe to merge because ${plural(blockingCount, "blocking issue")} ${blockingCount === 1 ? "requires" : "require"} attention.`
+      : state.reviewCoverage === "limited"
+        ? "The automated review is incomplete. Published findings are non-blocking, but omitted coverage can contain blocking defects."
       : "The PR has no blocking issues; the remaining suggestions are non-blocking.";
     const mergeReason = blockingCount > 0
       ? endWithPeriod(sanitizeMarkdownText(summary.mergeReason, 240))
+      : state.reviewCoverage === "limited"
+        ? "Unverified findings were suppressed and must not be treated as a clean result."
       : "The remaining findings are non-blocking suggestions.";
     lines.push(
       mergeAssessment,
@@ -201,6 +208,9 @@ export const buildReviewComment = (
       "",
       verdict,
       "",
+      ...(state.reviewCoverage === "limited"
+        ? ["**Coverage note:** Some changed code or candidate findings could not be verified.", ""]
+        : []),
     );
   }
 

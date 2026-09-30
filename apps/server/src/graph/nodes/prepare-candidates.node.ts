@@ -45,7 +45,11 @@ export const prepareCandidates = (
         continue;
       }
 
-      candidates.push({ id: candidateId(sourceAgent, comment), sourceAgent, comment });
+      const diffEvidence = selection.index.files
+        .flatMap((file) => file.hunks)
+        .find((hunk) => hunk.id === grounding.hunkId)
+        ?.rendered;
+      candidates.push({ id: candidateId(sourceAgent, comment), sourceAgent, comment, diffEvidence });
     }
   }
 

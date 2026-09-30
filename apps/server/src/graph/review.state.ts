@@ -116,7 +116,7 @@ export const PRReviewState = Annotation.Root({
     }),
 
     error: Annotation<string | null>({
-        value: (_prev, next) => next,
+        value: (prev, next) => prev ?? next,
         default: () => null,
     }),
 });

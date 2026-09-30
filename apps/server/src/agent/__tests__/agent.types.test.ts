@@ -40,7 +40,11 @@ describe("parseAgentComments", () => {
     });
   });
 
-  test("rejects prose-wrapped and malformed JSON", () => {
+  test("accepts a JSON code fence but rejects prose-wrapped and malformed JSON", () => {
+    expect(parseAgentComments(`\`\`\`json\n${JSON.stringify([comment()])}\n\`\`\``, "code")).toMatchObject({
+      status: "valid",
+      comments: [expect.objectContaining({ filePath: "src/auth.ts" })],
+    });
     expect(parseAgentComments(`Findings: ${JSON.stringify([comment()])}`, "code")).toMatchObject({
       status: "invalid",
       comments: [],
@@ -70,7 +74,7 @@ describe("parseAgentComments", () => {
       "code",
     );
 
-    expect(result).toMatchObject({ status: "invalid", comments: [], invalidCount: 1 });
+    expect(result).toMatchObject({ status: "partial", comments: [], invalidCount: 1 });
   });
 
   test("rejects informational candidates that cannot enter publication", () => {
@@ -79,7 +83,7 @@ describe("parseAgentComments", () => {
       "code",
     );
 
-    expect(result).toMatchObject({ status: "invalid", comments: [], invalidCount: 1 });
+    expect(result).toMatchObject({ status: "partial", comments: [], invalidCount: 1 });
   });
 
   test("enforces required fields, valid ranges, and bounded text", () => {
@@ -100,7 +104,7 @@ describe("parseAgentComments", () => {
       "code",
     );
 
-    expect(result).toMatchObject({ status: "invalid", comments: [], invalidCount: 7 });
+    expect(result).toMatchObject({ status: "partial", comments: [], invalidCount: 7 });
   });
 
   test("drops candidates over the specialist budget", () => {

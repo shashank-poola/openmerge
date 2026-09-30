@@ -200,6 +200,30 @@ export async function processReviewJob(
       return;
     }
 
+    if (result.error?.startsWith("STALE_REVIEW_CONTEXT:")) {
+      await deps.db.reviewSession.updateMany({
+        where: {
+          id: job.data.reviewSessionId,
+          status: "RUNNING",
+          workerId: deps.workerId,
+          jobId: queueJobId,
+          leaseId,
+        },
+        data: {
+          status: "COMPLETED",
+          filesReviewed: 0,
+          totalComments: 0,
+          completedAt: deps.now(),
+          heartbeatAt: null,
+          workerId: null,
+          lastErrorCode: null,
+          errorMessage: null,
+        },
+      });
+      console.info(`[worker] review superseded for session ${job.data.reviewSessionId}`);
+      return;
+    }
+
     if (result.error) {
       throw new Error(result.error);
     }

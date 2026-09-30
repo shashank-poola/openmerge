@@ -161,6 +161,44 @@ rename to a/new-name.ts
     ).toBe("grounded");
   });
 
+  test("keeps deleted-file hunks in the specialist view without limiting coverage", () => {
+    const diff = `diff --git a/src/obsolete.ts b/src/obsolete.ts
+deleted file mode 100644
+--- a/src/obsolete.ts
++++ /dev/null
+@@ -1,2 +0,0 @@
+-export const obsolete = true;
+--- removed SQL-style comment
+`;
+
+    const selection = selectCompleteHunks(diff, 10_000);
+
+    expect(selection.index.files[0]).toMatchObject({
+      path: null,
+      previousPath: "src/obsolete.ts",
+      status: "supported",
+    });
+    expect(selection.index.files[0]?.hunks[0]).toMatchObject({ complete: true });
+    expect(selection.view).toContain("--- removed SQL-style comment");
+    expect(selection.coverage).toMatchObject({ totalHunks: 1, includedHunks: 1, omittedHunks: 0 });
+  });
+
+  test("does not parse added or removed source prefixes as file markers", () => {
+    const diff = `diff --git a/query.sql b/query.sql
+--- a/query.sql
++++ b/query.sql
+@@ -1,2 +1,2 @@
+--- old comment
++++ new comment
+ SELECT 1;
+`;
+
+    const parsed = parseUnifiedDiff(diff);
+
+    expect(parsed.files[0]).toMatchObject({ path: "query.sql", status: "supported" });
+    expect(parsed.files[0]?.hunks[0]).toMatchObject({ complete: true });
+  });
+
   test("records omitted coverage and never accepts a partial hunk", () => {
     const complete = selectCompleteHunks(twoHunkDiff, 10_000);
     const firstHunkOnly = selectCompleteHunks(

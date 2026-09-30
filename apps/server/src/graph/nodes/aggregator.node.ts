@@ -28,11 +28,7 @@ export const aggregateComments = (state: PRReviewStateType): Partial<PRReviewSta
         return true;
     });
 
-    const sorted = deduped.sort(
-        (a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]
-    );
-
-    const capped = sorted
+    const capped = deduped
         .map((comment) => ({
             ...comment,
             blocking: comment.severity === "CRITICAL" || comment.severity === "HIGH",

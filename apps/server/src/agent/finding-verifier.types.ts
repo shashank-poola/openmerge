@@ -7,6 +7,7 @@ export type FindingCandidate = {
   id: string;
   sourceAgent: FindingSourceAgent;
   comment: AgentComment;
+  diffEvidence?: string;
 };
 
 export type EvidenceSnippet = {
@@ -20,7 +21,7 @@ export type EvidenceSnippet = {
 
 const evidenceSchema = z.object({
   snippetId: z.string().min(1).max(120),
-  quote: z.string().min(3).max(2_000).refine((value) => value.trim().length > 0),
+  quote: z.string().min(1).max(2_000).refine((value) => value.trim().length > 0),
 }).strict();
 
 const keptVerdictSchema = z.object({
@@ -63,7 +64,7 @@ export type VerifierParseResult =
   | { ok: true; verdicts: FindingVerdict[] }
   | { ok: false; error: string };
 
-const unwrapJsonFence = (raw: string): string => {
+export const unwrapJsonFence = (raw: string): string => {
   const trimmed = raw.trim();
   const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
   return fenced?.[1]?.trim() ?? trimmed;
@@ -97,12 +98,20 @@ export const parseVerifierResponse = (
 
     if (verdict.verdict === "keep") {
       let hasChangedCodeEvidence = false;
+      const candidate = candidates.find((entry) => entry.id === verdict.candidateId);
+      const currentCodeLines = new Set(
+        candidate?.comment.currentCode?.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n") ?? [],
+      );
       for (const evidence of verdict.evidence) {
         const snippet = snippetsById.get(evidence.snippetId);
-        if (!snippet || !evidence.snippetId.startsWith(`${verdict.candidateId}:`) || !snippet.text.includes(evidence.quote)) {
+        const exactSnippetLine = snippet?.text.split("\n").includes(evidence.quote) ?? false;
+        if (!snippet || !evidence.snippetId.startsWith(`${verdict.candidateId}:`) || !exactSnippetLine) {
           return { ok: false, error: "verifier returned unsupported evidence" };
         }
-        if (snippet.source === "diff") hasChangedCodeEvidence = true;
+        const quotedChangedLine = evidence.quote.startsWith("+") && !evidence.quote.startsWith("+++")
+          ? evidence.quote.slice(1)
+          : evidence.quote;
+        if (snippet.source === "diff" && currentCodeLines.has(quotedChangedLine)) hasChangedCodeEvidence = true;
       }
       if (!hasChangedCodeEvidence) return { ok: false, error: "verifier did not cite changed code" };
     }

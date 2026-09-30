@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isBlockingSeverity } from "./finding.policy";
+import { unwrapJsonFence } from "./finding-verifier.types";
 import type { AgentComment, LinterIssue, CodeGraphNode, ASTSummary, ImportSource, PRHistoryEntry } from "../types/review-context.type";
 
 export type AgentInput = {
@@ -91,7 +92,7 @@ export const parseAgentComments = (
 
     let parsed: unknown;
     try {
-        parsed = JSON.parse(raw);
+        parsed = JSON.parse(unwrapJsonFence(raw));
     } catch {
         return { status: "invalid", comments: [], invalidCount: 1 };
     }
@@ -126,7 +127,7 @@ export const parseAgentComments = (
     }
 
     return {
-        status: comments.length > 0 ? "partial" : "invalid",
+        status: "partial",
         comments,
         invalidCount,
     };

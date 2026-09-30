@@ -62,6 +62,25 @@ describe("buildReviewComment", () => {
     expect(output).not.toContain("Looks good to merge");
   });
 
+  test("keeps limited coverage visible when verified findings remain", () => {
+    const output = buildReviewComment(
+      { ...state, reviewCoverage: "limited" },
+      [{
+        filePath: "apps/server/src/llm/llm.provider.ts",
+        line: 12,
+        body: "Confirmed bounded defect.",
+        severity: "MEDIUM",
+        category: "BUG",
+        blocking: false,
+      }],
+      1_000,
+    );
+
+    expect(output).toContain("⚠️ **Review incomplete**");
+    expect(output).toContain("omitted coverage can contain blocking defects");
+    expect(output).not.toContain("The PR has no blocking issues");
+  });
+
   test("does not let a model-controlled blocking flag promote medium severity", () => {
     const output = buildReviewComment(state, [{
       filePath: "apps/server/src/llm/llm.provider.ts",

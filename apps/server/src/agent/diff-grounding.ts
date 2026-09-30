@@ -212,7 +212,7 @@ const finaliseFile = (
   if (!file) return;
   finaliseHunk(file, hunk);
   if (file.previousPath === file.path) file.previousPath = null;
-  if (!file.path && file.status === "supported") {
+  if (!file.path && !file.previousPath && file.status === "supported") {
     file.status = "unsupported";
     file.unsupportedReason = "missing-current-path";
   }
@@ -290,11 +290,11 @@ export const parseUnifiedDiff = (diff: string): DiffEvidenceIndex => {
       file.path = canonicalRepositoryPath(line.slice("rename to ".length));
       continue;
     }
-    if (line.startsWith("--- ")) {
+    if (!hunk && line.startsWith("--- ")) {
       file.previousPath = pathFromFileMarker(line);
       continue;
     }
-    if (line.startsWith("+++ ")) {
+    if (!hunk && line.startsWith("+++ ")) {
       file.path = pathFromFileMarker(line);
       continue;
     }

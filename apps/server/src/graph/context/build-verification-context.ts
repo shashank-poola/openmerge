@@ -7,6 +7,18 @@ const MAX_SNIPPET_CHARS = 3_000;
 const MAX_TOTAL_CHARS = 64_000;
 const WINDOW_LINES = 12;
 
+const boundedDiffEvidence = (candidate: FindingCandidate): string => {
+  const fallback = candidate.comment.currentCode ?? "";
+  if (!candidate.diffEvidence) return fallback;
+  const lines = candidate.diffEvidence.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  const anchor = `+${fallback.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n")[0] ?? ""}`;
+  const anchorIndex = lines.indexOf(anchor);
+  if (anchorIndex < 0) return fallback;
+  const start = Math.max(0, anchorIndex - WINDOW_LINES);
+  const end = Math.min(lines.length, anchorIndex + WINDOW_LINES + 1);
+  return lines.slice(start, end).join("\n").slice(0, MAX_SNIPPET_CHARS);
+};
+
 const isWithin = (root: string, candidate: string): boolean => {
   const pathFromRoot = relative(root, candidate);
   return pathFromRoot !== ".." && !pathFromRoot.startsWith(`..${sep}`) && !isAbsolute(pathFromRoot);
@@ -22,10 +34,12 @@ const sourceWindow = async (
   const requested = resolve(resolvedRoot, candidate.comment.filePath);
   if (!isWithin(resolvedRoot, requested)) return null;
 
+  if (candidate.comment.filePath.split("/").includes(".git")) return null;
+  const requestedStats = await lstat(requested);
+  if (requestedStats.isSymbolicLink() || !requestedStats.isFile() || requestedStats.size > MAX_FILE_BYTES) return null;
+
   const resolvedFile = await realpath(requested);
-  if (!isWithin(resolvedRoot, resolvedFile)) return null;
-  const stats = await lstat(resolvedFile);
-  if (!stats.isFile() || stats.isSymbolicLink() || stats.size > MAX_FILE_BYTES) return null;
+  if (!isWithin(resolvedRoot, resolvedFile) || resolvedFile !== requested) return null;
 
   const buffer = await readFile(resolvedFile);
   if (buffer.includes(0)) return null;
@@ -64,7 +78,7 @@ export const buildVerificationContext = async (
       startLine: candidate.comment.startLine ?? candidate.comment.line,
       endLine: candidate.comment.line,
       source: "diff",
-      text: currentCode.slice(0, MAX_SNIPPET_CHARS),
+      text: boundedDiffEvidence(candidate),
     };
     snippets.push(diffSnippet);
     totalChars += diffSnippet.text.length;
