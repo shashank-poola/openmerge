@@ -25,19 +25,23 @@ export const fetchContext = async (
     try {
         const octokit = createInstallationOctokit(state.githubInstallationId);
 
-        const [prRes, diffRes, filesRes] = await Promise.all([
-            octokit.rest.pulls.get({
-                owner: state.owner,
-                repo: state.repoName,
-                pull_number: state.prNumber,
-            }),
+        const prRes = await octokit.rest.pulls.get({
+            owner: state.owner,
+            repo: state.repoName,
+            pull_number: state.prNumber,
+        });
+        if (prRes.data.head.sha !== state.headSha) {
+            return { error: "STALE_REVIEW_CONTEXT: pull request head changed before context collection" };
+        }
+
+        const [diffRes, files] = await Promise.all([
             octokit.rest.pulls.get({
                 owner: state.owner,
                 repo: state.repoName,
                 pull_number: state.prNumber,
                 mediaType: { format: "diff" },
             }),
-            octokit.rest.pulls.listFiles({
+            octokit.paginate(octokit.rest.pulls.listFiles, {
                 owner: state.owner,
                 repo: state.repoName,
                 pull_number: state.prNumber,
@@ -45,7 +49,16 @@ export const fetchContext = async (
             }),
         ]);
 
-        const changedFiles = filesRes.data.map((f) => f.filename);
+        const confirmedPr = await octokit.rest.pulls.get({
+            owner: state.owner,
+            repo: state.repoName,
+            pull_number: state.prNumber,
+        });
+        if (confirmedPr.data.head.sha !== state.headSha) {
+            return { error: "STALE_REVIEW_CONTEXT: pull request head changed during context collection" };
+        }
+
+        const changedFiles = files.map((f) => f.filename);
         const diff = (diffRes.data as unknown as string) ?? null;
         const prTitle = prRes.data.title ?? null;
 

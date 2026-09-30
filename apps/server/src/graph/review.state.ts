@@ -7,6 +7,7 @@ import type {
     ASTSummary,
     CodeGraphNode,
 } from "../types/review-context.type";
+import type { FindingCandidate, VerificationStats } from "../agent/finding-verifier.types";
 
 export type {
     AgentComment,
@@ -89,13 +90,33 @@ export const PRReviewState = Annotation.Root({
         value: (prev, next) => [...prev, ...next],
         default: () => [],
     }),
+    agentFailures: Annotation<string[]>({
+        value: (prev, next) => [...prev, ...next],
+        default: () => [],
+    }),
+    candidateFindings: Annotation<FindingCandidate[]>({
+        value: (_prev, next) => next,
+        default: () => [],
+    }),
+    verifiedComments: Annotation<AgentComment[]>({
+        value: (_prev, next) => next,
+        default: () => [],
+    }),
+    verificationStats: Annotation<VerificationStats>({
+        value: (_prev, next) => next,
+        default: () => ({ candidates: 0, kept: 0, suppressed: 0, uncertain: 0, demoted: 0 }),
+    }),
+    reviewCoverage: Annotation<"complete" | "limited">({
+        value: (prev, next) => prev === "limited" || next === "limited" ? "limited" : "complete",
+        default: () => "complete",
+    }),
     allComments: Annotation<AgentComment[]>({
         value: (_prev, next) => next,
         default: () => [],
     }),
 
     error: Annotation<string | null>({
-        value: (_prev, next) => next,
+        value: (prev, next) => next === "REVIEW_OWNERSHIP_LOST" ? next : prev ?? next,
         default: () => null,
     }),
 });

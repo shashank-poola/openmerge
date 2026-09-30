@@ -3,6 +3,8 @@ import { PRReviewState } from "./review.state";
 import { fetchContext } from "./nodes/fetch-context.node";
 import { codeReviewAgent, securityAgent, performanceAgent } from "./nodes/review-agents.node";
 import { aggregateComments } from "./nodes/aggregator.node";
+import { prepareCandidates } from "./nodes/prepare-candidates.node";
+import { verifyFindings } from "./nodes/verify-findings.node";
 import { postReview } from "./nodes/post-review.node";
 
 const graph = new StateGraph(PRReviewState)
@@ -10,15 +12,17 @@ const graph = new StateGraph(PRReviewState)
     .addNode("codeReview", codeReviewAgent)
     .addNode("securityReview", securityAgent)
     .addNode("performanceReview", performanceAgent)
+    .addNode("prepareCandidates", prepareCandidates)
+    .addNode("verifyFindings", verifyFindings)
     .addNode("aggregate", aggregateComments)
     .addNode("postReview", postReview)
     .addEdge(START, "fetchContext")
     .addEdge("fetchContext", "codeReview")
     .addEdge("fetchContext", "securityReview")
     .addEdge("fetchContext", "performanceReview")
-    .addEdge("codeReview", "aggregate")
-    .addEdge("securityReview", "aggregate")
-    .addEdge("performanceReview", "aggregate")
+    .addEdge(["codeReview", "securityReview", "performanceReview"], "prepareCandidates")
+    .addEdge("prepareCandidates", "verifyFindings")
+    .addEdge("verifyFindings", "aggregate")
     .addEdge("aggregate", "postReview")
     .addEdge("postReview", END);
 
