@@ -3,7 +3,6 @@ import { Bricolage_Grotesque } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import "@fontsource-variable/google-sans";
 import "./globals.css";
-import Script from "next/script";
 import Providers from "@/components/Providers";
 
 const bricolage = Bricolage_Grotesque({
@@ -23,13 +22,6 @@ export const metadata: Metadata = {
     apple: "/companies/openmerge.png",
   },
 };
-
-// Inside <body> of your root layout:
-<Script
-  src="http://localhost:8787/script.js"
-  data-site="vt_qnrbr701rqj5yyec"
-  strategy="afterInteractive"
-/>
 
 export default function RootLayout({
   children,

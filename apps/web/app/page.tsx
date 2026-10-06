@@ -1,7 +1,6 @@
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
-import { BentoSection } from "@/components/landing/BentoSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { ReviewShowcase } from "@/components/landing/ReviewShowcase";
 import { CompetitorsSection } from "@/components/landing/CompetitorsSection";
@@ -16,7 +15,6 @@ export default function LandingPage() {
         <SiteHeader />
         <HeroSection />
         <FeaturesGrid />
-        <BentoSection />
         <FeaturesSection />
         <ReviewShowcase />
         <CompetitorsSection />
