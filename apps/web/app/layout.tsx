@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
+import Script from "next/script";
 import { GeistSans } from "geist/font/sans";
 import "@fontsource-variable/google-sans";
 import "./globals.css";
@@ -23,6 +24,11 @@ export const metadata: Metadata = {
   },
 };
 
+const viewtallySrc =
+  process.env.NEXT_PUBLIC_VIEWTALLY_SRC ?? "http://localhost:8787/script.js";
+const viewtallySiteId =
+  process.env.NEXT_PUBLIC_VIEWTALLY_SITE_ID ?? "vt_qnrbr701rqj5yyec";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,6 +38,11 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable} ${bricolage.variable}`}>
       <body>
         <Providers>{children}</Providers>
+        <Script
+          src={viewtallySrc}
+          data-site={viewtallySiteId}
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
