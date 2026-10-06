@@ -306,3 +306,8 @@ html {
     color: #171717;
   }
 }
+
+/* Aceternity `bg-dot-black/[0.2]` pattern, used by the landing bento grid */
+.om-bg-dot {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' fill='none'%3e%3ccircle fill='rgb(0 0 0 / 0.2)' cx='10' cy='10' r='1.6257413380501518'%3e%3c/circle%3e%3c/svg%3e");
+}
