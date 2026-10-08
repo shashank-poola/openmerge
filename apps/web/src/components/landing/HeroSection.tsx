@@ -38,7 +38,7 @@ export function HeroSection() {
         </Link>
       </div>
 
-      <div id="demo" className="mx-auto mt-20 max-w-[820px] overflow-hidden rounded-[24px] border border-[#dcdcd8] bg-[#fafaf8] shadow-[0_15px_40px_rgba(23,23,23,0.035)]">
+      <div id="demo" className="mx-auto mt-20 max-w-[980px] overflow-hidden rounded-[24px] border border-[#dcdcd8] bg-[#fafaf8] shadow-[0_15px_40px_rgba(23,23,23,0.035)]">
         <DemoVideo />
       </div>
     </section>
