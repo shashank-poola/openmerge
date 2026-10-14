@@ -3,6 +3,7 @@ export type LLMTraceOptions = {
     runName?: string;
     tags?: string[];
     metadata?: Record<string, unknown>;
+    signal?: AbortSignal;
 };
 
 /** Labels a call with its agent while keeping the trace metadata the caller supplied. */
@@ -14,4 +15,5 @@ export const agentTrace = (
     runName,
     tags: [agentTag, ...(trace?.tags ?? [])],
     metadata: trace?.metadata,
+    signal: trace?.signal,
 });

@@ -183,6 +183,24 @@ describe("processReviewJob", () => {
     }));
   });
 
+  test("completes a superseded review without retrying it", async () => {
+    reviewGraphInvokeMock.mockResolvedValueOnce({
+      error: "STALE_REVIEW_CONTEXT: pull request head changed during context collection",
+      changedFiles: [],
+      allComments: [],
+    });
+
+    await processReviewJob(createJob(), createDeps());
+
+    expect(sessionUpdateManyMock).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: "session-1", status: "RUNNING", workerId: "test-worker" }),
+      data: expect.objectContaining({ status: "COMPLETED", filesReviewed: 0, totalComments: 0 }),
+    }));
+    expect(sessionUpdateManyMock).not.toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: "RETRYING" }),
+    }));
+  });
+
   test("records a timeout as a retryable review failure", async () => {
     reviewGraphInvokeMock.mockImplementationOnce(
       () => new Promise<ReviewGraphTestResult>(() => undefined),

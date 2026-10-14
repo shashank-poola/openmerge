@@ -59,7 +59,9 @@ export const postReview = async (state: PRReviewStateType): Promise<Partial<PRRe
             owner: state.owner,
             repo: state.repoName,
             comment_id: Number(loadingCommentId),
-            body: "**OpenMerge** encountered an error during review. Please try again.",
+            body: state.error.startsWith("STALE_REVIEW_CONTEXT:")
+              ? "**OpenMerge** skipped this review because a newer commit is available. The newer commit will receive its own review."
+              : "**OpenMerge** encountered an error during review. Please try again.",
           });
         } catch {
           // The review is already failing; preserving the original failure is more useful.

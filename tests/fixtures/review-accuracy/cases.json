@@ -1,0 +1,138 @@
+[
+  {
+    "id": "pr11-provider-invocation",
+    "candidate": {
+      "id": "security-provider-call",
+      "sourceAgent": "security",
+      "comment": {
+        "filePath": "apps/server/src/llm/llm.provider.ts",
+        "line": 24,
+        "body": "Calling the model creates a prompt-injection vulnerability.",
+        "severity": "HIGH",
+        "category": "SECURITY",
+        "currentCode": "return baiForTask(task).invoke(messages);",
+        "suggestion": "Sanitize messages before invoking the model.",
+        "blocking": true
+      }
+    },
+    "snippet": {
+      "id": "security-provider-call:diff",
+      "filePath": "apps/server/src/llm/llm.provider.ts",
+      "startLine": 24,
+      "endLine": 24,
+      "source": "diff",
+      "text": "return baiForTask(task).invoke(messages);"
+    },
+    "verdict": {
+      "candidateId": "security-provider-call",
+      "verdict": "suppress",
+      "reasonCode": "not_introduced"
+    },
+    "expectedPublished": 0
+  },
+  {
+    "id": "pr11-response-text-not-render-sink",
+    "candidate": {
+      "id": "security-response-text",
+      "sourceAgent": "security",
+      "comment": {
+        "filePath": "apps/server/src/llm/llm.provider.ts",
+        "line": 31,
+        "body": "Returning response text creates a HIGH XSS vulnerability.",
+        "severity": "HIGH",
+        "category": "SECURITY",
+        "currentCode": "return block.text;",
+        "suggestion": "return escapeHtml(block.text);",
+        "blocking": true
+      }
+    },
+    "snippet": {
+      "id": "security-response-text:diff",
+      "filePath": "apps/server/src/llm/llm.provider.ts",
+      "startLine": 31,
+      "endLine": 31,
+      "source": "diff",
+      "text": "return block.text;"
+    },
+    "verdict": {
+      "candidateId": "security-response-text",
+      "verdict": "suppress",
+      "reasonCode": "no_demonstrated_impact"
+    },
+    "expectedPublished": 0
+  },
+  {
+    "id": "removed-authorization-check",
+    "candidate": {
+      "id": "security-auth-bypass",
+      "sourceAgent": "security",
+      "comment": {
+        "filePath": "src/routes/account.ts",
+        "line": 18,
+        "body": "The route returns another user's account without an ownership check.",
+        "severity": "HIGH",
+        "category": "SECURITY",
+        "currentCode": "return db.account.findUnique({ where: { id: req.params.id } });",
+        "suggestion": "return db.account.findFirst({ where: { id: req.params.id, userId: req.user.id } });",
+        "blocking": true
+      }
+    },
+    "snippet": {
+      "id": "security-auth-bypass:diff",
+      "filePath": "src/routes/account.ts",
+      "startLine": 18,
+      "endLine": 18,
+      "source": "diff",
+      "text": "return db.account.findUnique({ where: { id: req.params.id } });"
+    },
+    "verdict": {
+      "candidateId": "security-auth-bypass",
+      "verdict": "keep",
+      "severity": "HIGH",
+      "body": "The changed route permits authenticated users to request accounts they do not own.",
+      "evidence": [{
+        "snippetId": "security-auth-bypass:diff",
+        "quote": "return db.account.findUnique({ where: { id: req.params.id } });"
+      }],
+      "preserveSuggestion": true
+    },
+    "expectedPublished": 1
+  },
+  {
+    "id": "missing-await",
+    "candidate": {
+      "id": "code-missing-await",
+      "sourceAgent": "code",
+      "comment": {
+        "filePath": "src/jobs.ts",
+        "line": 42,
+        "body": "The handler returns before the required write completes.",
+        "severity": "MEDIUM",
+        "category": "BUG",
+        "currentCode": "saveJob(job);",
+        "suggestion": "await saveJob(job);",
+        "blocking": false
+      }
+    },
+    "snippet": {
+      "id": "code-missing-await:diff",
+      "filePath": "src/jobs.ts",
+      "startLine": 42,
+      "endLine": 42,
+      "source": "diff",
+      "text": "saveJob(job);"
+    },
+    "verdict": {
+      "candidateId": "code-missing-await",
+      "verdict": "keep",
+      "severity": "MEDIUM",
+      "body": "The changed handler can finish before the required write completes.",
+      "evidence": [{
+        "snippetId": "code-missing-await:diff",
+        "quote": "saveJob(job);"
+      }],
+      "preserveSuggestion": true
+    },
+    "expectedPublished": 1
+  }
+]

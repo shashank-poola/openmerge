@@ -18,9 +18,11 @@ export const runSecurityAgent = async (
             "security",
             agentTrace("securityAgent", "agent:security", trace)
         );
+        const parsed = parseAgentComments(content, "security");
         return {
             agentName: "securityAgent",
-            comments: parseAgentComments(content),
+            comments: parsed.comments,
+            outputStatus: parsed.status,
             durationMs: Date.now() - start,
             provider,
         };
@@ -28,6 +30,7 @@ export const runSecurityAgent = async (
         return {
             agentName: "securityAgent",
             comments: [],
+            outputStatus: "invalid",
             durationMs: Date.now() - start,
             provider: "groq",
             error: String(err),

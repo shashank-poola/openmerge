@@ -13,5 +13,6 @@ export const geminiForTask = (_task: keyof typeof GROQ_DEFAULTS) => {
         apiKey: env.GEMINI_API_KEY,
         model: GEMINI_MODEL,
         temperature: 0.1,
+        ...( _task === "verification" ? { maxOutputTokens: 6_000, maxRetries: 0 } : {}),
     });
 };

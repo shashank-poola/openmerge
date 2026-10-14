@@ -18,9 +18,11 @@ export const runPerformanceAgent = async (
             "performance",
             agentTrace("performanceAgent", "agent:performance", trace)
         );
+        const parsed = parseAgentComments(content, "performance");
         return {
             agentName: "performanceAgent",
-            comments: parseAgentComments(content),
+            comments: parsed.comments,
+            outputStatus: parsed.status,
             durationMs: Date.now() - start,
             provider,
         };
@@ -28,6 +30,7 @@ export const runPerformanceAgent = async (
         return {
             agentName: "performanceAgent",
             comments: [],
+            outputStatus: "invalid",
             durationMs: Date.now() - start,
             provider: "groq",
             error: String(err),

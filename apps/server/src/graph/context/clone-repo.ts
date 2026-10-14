@@ -10,7 +10,6 @@ const execAsync = promisify(exec);
 
 export type CloneResult = {
     localPath: string;
-    token: string;
 };
 
 const getInstallationToken = async (githubInstallationId: string): Promise<string> => {
@@ -32,11 +31,18 @@ export const cloneRepo = async (params: {
     const token = await getInstallationToken(params.githubInstallationId);
     const localPath = await mkdtemp(join(tmpdir(), "openmerge-"));
 
-    const cloneUrl = `https://x-access-token:${token}@github.com/${params.owner}/${params.repoName}.git`;
+    const cloneUrl = `https://github.com/${params.owner}/${params.repoName}.git`;
+    const gitEnv = {
+        ...process.env,
+        GIT_CONFIG_COUNT: "1",
+        GIT_CONFIG_KEY_0: "http.extraHeader",
+        GIT_CONFIG_VALUE_0: `Authorization: Basic ${Buffer.from(`x-access-token:${token}`).toString("base64")}`,
+    };
 
     await execAsync(`git clone --depth 1 --no-tags --single-branch "${cloneUrl}" .`, {
         cwd: localPath,
         timeout: 60_000,
+        env: gitEnv,
     });
 
     try {
@@ -49,6 +55,7 @@ export const cloneRepo = async (params: {
         await execAsync(`git fetch --depth 1 origin ${params.headSha}`, {
             cwd: localPath,
             timeout: 60_000,
+            env: gitEnv,
         });
         await execAsync(`git checkout ${params.headSha}`, {
             cwd: localPath,
@@ -56,7 +63,7 @@ export const cloneRepo = async (params: {
         });
     }
 
-    return { localPath, token };
+    return { localPath };
 };
 
 export const cleanupRepo = async (localPath: string): Promise<void> => {

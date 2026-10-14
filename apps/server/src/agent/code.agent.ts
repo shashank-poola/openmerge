@@ -18,9 +18,11 @@ export const runCodeAgent = async (
             "codeReview",
             agentTrace("codeAgent", "agent:code", trace)
         );
+        const parsed = parseAgentComments(content, "code");
         return {
             agentName: "codeAgent",
-            comments: parseAgentComments(content),
+            comments: parsed.comments,
+            outputStatus: parsed.status,
             durationMs: Date.now() - start,
             provider,
         };
@@ -28,6 +30,7 @@ export const runCodeAgent = async (
         return {
             agentName: "codeAgent",
             comments: [],
+            outputStatus: "invalid",
             durationMs: Date.now() - start,
             provider: "groq",
             error: String(err),
