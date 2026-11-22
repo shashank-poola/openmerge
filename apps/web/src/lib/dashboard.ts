@@ -4,6 +4,7 @@ import type {
   DashboardResponse,
   RecentReview,
   ReviewStatus,
+  ReviewComment,
 } from "@/types/dashboard";
 
 export const GITHUB_INSTALL_URL = "https://github.com/apps/openmerge-app/installations/select_target";
@@ -183,4 +184,13 @@ export function formatDuration(startedAt: string | null | undefined, completedAt
 
 export function githubPullRequestUrl(repository: string, prNumber: number) {
   return `https://github.com/${repository}/pull/${prNumber}`;
+}
+
+/** Filter findings using both the selected severity and a case-insensitive search. */
+export function filterReviewComments(comments: ReviewComment[], severity: CommentSeverity | null, search: string) {
+  const term = search.trim().toLowerCase();
+  return comments.filter((comment) =>
+    (!severity || comment.severity === severity) &&
+    (!term || [comment.filePath, comment.title, comment.body, comment.suggestion].some((value) => value?.toLowerCase().includes(term)))
+  );
 }

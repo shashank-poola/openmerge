@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Alert02Icon, ArrowLeft01Icon, ExternalLinkIcon, FileCodeIcon, GitBranchIcon, HashIcon, Refresh01Icon } from "@hugeicons/core-free-icons";
 import { DotmSquare3 } from "@/components/ui/dotm-square-3";
 import { getReview } from "@/lib/api";
-import { formatDateTime, formatDuration, formatRelativeTime, githubPullRequestUrl, pluralize, severityMeta, severityOrder } from "@/lib/dashboard";
+import { filterReviewComments, formatDateTime, formatDuration, formatRelativeTime, githubPullRequestUrl, pluralize, severityMeta, severityOrder } from "@/lib/dashboard";
 import { cn } from "@/lib/utils";
 import type { CommentSeverity, ReviewComment, ReviewDetailResponse } from "@/types/dashboard";
 import { buttonStyles, DashboardIcon, DashboardLoading, ErrorPanel, InlineError, Panel, SeverityBadge, StatusBadge } from "./DashboardPrimitives";
@@ -16,6 +16,7 @@ export function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<CommentSeverity | null>(null);
+  const [findingSearch, setFindingSearch] = useState("");
 
   const loadReview = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -55,11 +56,10 @@ export function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
 
   const commentsByFile = useMemo(() => {
     const groups = new Map<string, ReviewComment[]>();
-    comments
-      .filter((comment) => !severityFilter || comment.severity === severityFilter)
+    filterReviewComments(comments, severityFilter, findingSearch)
       .forEach((comment) => groups.set(comment.filePath, [...(groups.get(comment.filePath) ?? []), comment]));
     return [...groups.entries()];
-  }, [comments, severityFilter]);
+  }, [comments, severityFilter, findingSearch]);
 
   if (loading && !data) {
     return <DashboardLoading label="Loading review details" />;
@@ -204,9 +204,15 @@ export function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
       <Panel
         title="Findings"
         description={severityFilter ? `Showing ${severityMeta[severityFilter].label.toLowerCase()} findings` : "Inline feedback left on the pull request, grouped by file"}
-        action={severityFilter ? <button type="button" onClick={() => setSeverityFilter(null)} className={buttonStyles.ghost}>Clear filter</button> : null}
+        action={severityFilter || findingSearch.trim() ? <button type="button" onClick={() => { setSeverityFilter(null); setFindingSearch(""); }} className={buttonStyles.ghost}>Clear filters</button> : null}
         className="om-rise"
       >
+        {comments.length ? (
+          <div className="border-t border-[#f0f0ee] px-5 py-3">
+            <label className="sr-only" htmlFor="finding-search">Search findings</label>
+            <input id="finding-search" type="search" value={findingSearch} onChange={(event) => setFindingSearch(event.target.value)} placeholder="Search file paths or findings" className="h-9 w-full rounded-xl border border-[#ebebe8] bg-white px-3 text-[12.5px] text-[#3f3f3c] outline-none placeholder:text-[#b3b3ae] focus:border-[#9db8ee]" />
+          </div>
+        ) : null}
         {commentsByFile.length ? (
           <div className="border-t border-[#f0f0ee]">
             {commentsByFile.map(([filePath, fileComments]) => (
@@ -240,8 +246,8 @@ export function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
           </div>
         ) : (
           <div className="border-t border-[#f0f0ee] px-6 py-14 text-center">
-            <p className="text-[13px] font-medium text-[#3f3f3c]">{activeReview ? "Findings will appear when the review completes." : "No inline findings were recorded."}</p>
-            <p className="mt-1 text-[12px] text-[#8a8a85]">{activeReview ? "Hang tight — agents are still reading the diff." : review.status === "COMPLETED" ? "Clean pass. Nothing flagged in this pull request." : "Open the pull request on GitHub for the final review comment."}</p>
+            <p className="text-[13px] font-medium text-[#3f3f3c]">{comments.length ? "No findings match these filters." : activeReview ? "Findings will appear when the review completes." : "No inline findings were recorded."}</p>
+            <p className="mt-1 text-[12px] text-[#8a8a85]">{comments.length ? "Try a different search or clear the filters." : activeReview ? "Hang tight — agents are still reading the diff." : review.status === "COMPLETED" ? "Clean pass. Nothing flagged in this pull request." : "Open the pull request on GitHub for the final review comment."}</p>
           </div>
         )}
       </Panel>
